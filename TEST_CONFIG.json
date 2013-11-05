@@ -1,0 +1,43 @@
+{
+    "required_cookbook": {
+        "name": "apache",
+        "version": "0.4.217"
+    },
+    "required_role": {
+        "name": "Neo4j"
+    },
+    "required_client": {
+        "name": "neo4j.example.org"
+    },
+    "required_node": {
+        "name": "neo4j.example.org"
+    },
+    "required_environment": {
+        "name": "production"
+    },
+    "required_recipe": {
+        "name": "neo4j::server"
+    },
+    "required_user": {
+        "name": "admin"
+    },
+    "required_data": {
+        "name": "mysql"
+    },
+    "required_principal": {
+        "name": "admin"
+    },
+    "search_data": {
+        "index": "node",
+        "query": "hostname:memcached*"
+    },
+    "test_credentials": {
+        "host": "chef.",
+        "port": "443",
+        "version": "11.6.0",
+        "user_name":"marpaia",
+        "key": "/Users/marpaia/.chef/marpaia.pem"
+    },
+    "key_path": "/Users/marpaia/.chef/marpaia.pem",
+    "key_string": "-----BEGIN RSA PRIVATE KEY-----\nMIGqAgEAAiEA6+LQfqqdtOJ1nuTbqOvSPKj1PYDaTOHJy1axWHRCVI0CAwEAAQIg\nZwwg9RTn7Ft58r4bz8Glh4+7MUf6L//A5u6UpCCfKMECEQD2jKQ1ROm3Hz8d8Sc6\nRZ3lAhEA9O2I1QWR3E+tJkf0zigxiQIRAMebd/qUr2+Nwaj5K9w2rq0CEC5fKqDq\nRQtpKmctCHRft8ECEENd6oUlrEnx1UODsRg/IDo=\n-----END RSA PRIVATE KEY-----\n"
+}
