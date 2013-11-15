@@ -409,6 +409,7 @@ func responseBody(resp *http.Response) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	resp.Body.Close()
 
 	return body, nil
 
