@@ -158,11 +158,11 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	return chef, nil
 }
 
-func ConnectUrl(chef_server_url, version, userid, key string) (*Chef, error) {
+func ConnectUrl(chefServerUrl, version, userid, key string) (*Chef, error) {
 	chef := new(Chef)
 	chef.Version = version
 	chef.UserId = userid
-	chef.Url = chef_server_url
+	chef.Url = chefServerUrl
 
 	var rsaKey *rsa.PrivateKey
 	var err error
