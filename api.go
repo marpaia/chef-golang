@@ -158,6 +158,29 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	return chef, nil
 }
 
+func ConnectUrl(chefServerUrl, version, userid, key string) (*Chef, error) {
+	chef := new(Chef)
+	chef.Version = version
+	chef.UserId = userid
+	chef.Url = chefServerUrl
+
+	var rsaKey *rsa.PrivateKey
+	var err error
+
+	if strings.Contains(key, "-----BEGIN RSA PRIVATE KEY-----") {
+		rsaKey, err = keyFromString([]byte(key))
+	} else {
+		rsaKey, err = keyFromFile(key)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	chef.Key = rsaKey
+
+	return chef, nil
+}
+
 // keyFromFile reads an RSA private key given a filepath
 func keyFromFile(filename string) (*rsa.PrivateKey, error) {
 	content, err := ioutil.ReadFile(filename)
@@ -222,7 +245,7 @@ func (chef *Chef) generateRequest(method, endpoint string, params map[string]str
 			body.Add(key, value)
 		}
 	}
-	chef.apiRequest(req, method, fmt.Sprintf("/%s", endpoint), body.Encode())
+	chef.apiRequest(req, method, req.URL.Path, body.Encode())
 
 	if method == "GET" && len(params) > 0 {
 		urlParams := req.URL.Query()
