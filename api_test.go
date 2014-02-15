@@ -162,6 +162,37 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestPost(t *testing.T) {
+  c := testConnectionWrapper()
+  config := testConfig()
+  cookbook := config.RequiredCookbook.Name
+  run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
+  resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
+  if err != nil {
+    t.Error(err)
+  }
+  
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    t.Error(err)
+  }
+  
+  // This could or should be better. Be good to have another 
+  // test for unsolvable run_list
+  cookbooks := map[string]interface{}{}
+  json.Unmarshal(body, &cookbooks)
+  found := false
+  for name := range cookbooks {
+    if name == cookbook {
+      found = true
+      break
+    }
+  }
+  if !found {
+    t.Error("Cookbook not solved")
+  }
+}
+
 func TestConnect(t *testing.T) {
 	_, err := Connect()
 	if err != nil {
