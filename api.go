@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -212,10 +213,28 @@ func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*htt
 	return chef.makeRequest("GET", endpoint, params)
 }
 
-// Post makes an authenticated POST request to the Chef server for the supplied
+// PostForm makes an authenticated POST request to the Chef server With params for the supplied
 // endpoint
-func (chef *Chef) Post(endpoint string, params map[string]string) (*http.Response, error) {
+func (chef *Chef) PostForm(endpoint string, params map[string]string) (*http.Response, error) {
 	return chef.makeRequest("POST", endpoint, params)
+}
+
+// Post  post an io object to the chef server this uses standard http.Post, make sure you close
+// your io or send io.Closer
+func (chef *Chef) Post(endpoint string, bodyType string, body io.Reader) (*http.Response, error) {
+	requestURL := fmt.Sprintf("%s/%s", chef.Url, endpoint)
+	req, err := http.NewRequest("POST", requestURL, body)
+	if err != nil {
+		return nil, err
+	}
+
+	// add chef auth headers
+	for key, value := range chef.apiRequestHeaders("POST", endpoint, "") {
+		req.Header.Add(key, value)
+	}
+
+	// make the request
+	return chef.Do(req)
 }
 
 // Put makes an authenticated PUT request to the Chef server for the supplied
