@@ -29,7 +29,7 @@ func testConnectionWrapper() *Chef {
 	t := new(testing.T)
 	chef, err := Connect()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	chef.SSLNoVerify = true
 
