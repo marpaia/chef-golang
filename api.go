@@ -194,6 +194,9 @@ func keyFromFile(filename string) (*rsa.PrivateKey, error) {
 // keyFromString parses an RSA private key from a string
 func keyFromString(key []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(key)
+	if block == nil {
+		return nil, errors.New("block size invalid")
+	}
 	rsaKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
