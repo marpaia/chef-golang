@@ -12,9 +12,25 @@ go get github.com/marpaia/chef-golang
 
 ## Unit tests
 
-Obviously many of the unit tests require a functioning Chef installation in
-order to verify the results of API requests. Edit the `TEST_CONFIG.json` file
-with the appropriate endpoints and information, and run `go test -v`.
+### Using Docker to run the unit tests
+
+-Obviously many of the unit tests require a functioning Chef installation in
+-order to verify the results of API requests. Edit the `TEST_CONFIG.json` file
+-with the appropriate endpoints and information, and run `go test -v`.
+If you don't want to set up a Chef server to work on this API or write tools
+that interact with a Chef server, use the included Docker configurations.
+
+If you've never ran docker before, run the follow at somewhere that's *not* the
+code respository (like `~/` or `~/docker` for example):
+
+1. Install VirtualBox
+2. Install docker: `brew install boot2docker`
+3. run `boot2docker init`
+4. run `boot2docker up`
+6. run `docker build .`
+
+If you have run docker before or you've completed the previous steps, just
+`cd` into the code repo and run `docker build .`
 
 ## External dependencies
 
