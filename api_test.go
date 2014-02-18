@@ -162,46 +162,48 @@ func TestGet(t *testing.T) {
 }
 
 func TestPost(t *testing.T) {
-  config := testConfig()
-  cookbook := config.RequiredCookbook.Name
-  run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
-  resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
-  if err != nil {
-    t.Error(err)
-  }
-  
-  body, err := ioutil.ReadAll(resp.Body)
-  if err != nil {
-    t.Error(err)
-  }
-  
-  // This could or should be better. Be good to have another 
-  // test for unsolvable run_list
-  cookbooks := map[string]interface{}{}
-  json.Unmarshal(body, &cookbooks)
-  found := false
-  for name := range cookbooks {
-    if name == cookbook {
-      found = true
-      break
-    }
-  }
-  if !found {
-    t.Error("Cookbook not solved")
-  }
 	c := testConnectionWrapper(t)
+	config := testConfig()
+	cookbook := config.RequiredCookbook.Name
+	run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
+	resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// This could or should be better. Be good to have another
+	// test for unsolvable run_list
+	cookbooks := map[string]interface{}{}
+	json.Unmarshal(body, &cookbooks)
+	found := false
+	for name := range cookbooks {
+		if name == cookbook {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Cookbook not solved")
+	}
 }
 
 func TestConnect(t *testing.T) {
-	_, err := Connect()
-	if err != nil {
+	if _, err := Connect(); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestApiRequestHeaders(t *testing.T) {
-	headers := chef.apiRequestHeaders("GET", "/cookbooks", "")
 	chef := testConnectionWrapper(t)
+	headers, err := chef.apiRequestHeaders("GET", "/cookbooks", "")
+	if err != nil {
+		t.Fatal(err)
+	}
 	count := 0
 	for _, requiredHeader := range testRequiredHeaders {
 		for header := range headers {
@@ -217,8 +219,11 @@ func TestApiRequestHeaders(t *testing.T) {
 }
 
 func TestGenerateRequestAuthorization(t *testing.T) {
-	auth := chef.generateRequestAuthorization("GET", "/cookbooks", "", "2013-10-27T20:45:25Z")
 	chef := testConnectionWrapper(t)
+	auth, err := chef.generateRequestAuthorization("GET", "/cookbooks", "", "2013-10-27T20:45:25Z")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(auth[0]) != 60 {
 		t.Error("Incorrect request authorization string")
 	}

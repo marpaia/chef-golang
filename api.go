@@ -103,6 +103,10 @@ func Connect() (*Chef, error) {
 		}
 	}
 
+	if chef.Key == nil {
+		return nil, errors.New("missing 'client_key' in knife.rb")
+	}
+
 	return chef, nil
 }
 
@@ -195,7 +199,7 @@ func keyFromFile(filename string) (*rsa.PrivateKey, error) {
 func keyFromString(key []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(key)
 	if block == nil {
-		return nil, errors.New("block size invalid")
+		return nil, fmt.Errorf("block size invalid for '%s'", string(key))
 	}
 	rsaKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
@@ -232,7 +236,11 @@ func (chef *Chef) Post(endpoint string, bodyType string, body io.Reader) (*http.
 	}
 
 	// add chef auth headers
-	for key, value := range chef.apiRequestHeaders("POST", endpoint, "") {
+	headers, err := chef.apiRequestHeaders("POST", endpoint, "")
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range headers {
 		req.Header.Add(key, value)
 	}
 
@@ -402,7 +410,7 @@ func (chef *Chef) privateEncrypt(data []byte) (enc []byte, err error) {
 
 // generateRequestAuthorization returns a string slice of the Chef server
 // authorization headers
-func (chef *Chef) generateRequestAuthorization(httpMethod, path, body, timestamp string) []string {
+func (chef *Chef) generateRequestAuthorization(httpMethod, path, body, timestamp string) ([]string, error) {
 	var content string
 	content += fmt.Sprintf("Method:%s\n", httpMethod)
 	content += fmt.Sprintf("Hashed Path:%s\n", hashAndBase64(path))
@@ -411,14 +419,14 @@ func (chef *Chef) generateRequestAuthorization(httpMethod, path, body, timestamp
 	content += fmt.Sprintf("X-Ops-UserId:%s", chef.UserId)
 	signature, err := chef.privateEncrypt([]byte(content))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return base64BlockEncode([]byte(string(signature)))
+	return base64BlockEncode([]byte(string(signature))), nil
 }
 
 // apiRequestHeaders generates a map of all of the request headers that a
 // request to the Chef API will need
-func (chef *Chef) apiRequestHeaders(httpMethod, path, body string) map[string]string {
+func (chef *Chef) apiRequestHeaders(httpMethod, path, body string) (map[string]string, error) {
 	timestamp := getTimestamp()
 	headers := map[string]string{
 		"accept":             "application/json",
@@ -429,19 +437,28 @@ func (chef *Chef) apiRequestHeaders(httpMethod, path, body string) map[string]st
 		"x-ops-content-hash": hashAndBase64(body),
 	}
 
-	for index, value := range chef.generateRequestAuthorization(httpMethod, path, body, timestamp) {
+	auths, err := chef.generateRequestAuthorization(httpMethod, path, body, timestamp)
+	if err != nil {
+		return nil, err
+	}
+	for index, value := range auths {
 		headers[fmt.Sprintf("X-Ops-Authorization-%d", index+1)] = string(value)
 	}
 
-	return headers
+	return headers, nil
 }
 
 // chefApiRequest adds all of the necessary headers to an HTTP request to the
 // chef server
-func (chef *Chef) apiRequest(req *http.Request, httpMethod, path, body string) {
-	for key, value := range chef.apiRequestHeaders(httpMethod, path, body) {
+func (chef *Chef) apiRequest(req *http.Request, httpMethod, path, body string) error {
+	headers, err := chef.apiRequestHeaders(httpMethod, path, body)
+	if err != nil {
+		return err
+	}
+	for key, value := range headers {
 		req.Header.Add(key, value)
 	}
+	return nil
 }
 
 // Given an http response object, responseBody returns the response body
