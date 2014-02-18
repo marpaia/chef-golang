@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetUsers(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	users, err := chef.GetUsers()
 	if err != nil {

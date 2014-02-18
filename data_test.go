@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetData(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	data, err := chef.GetData()
 	if err != nil {
@@ -24,7 +24,7 @@ func TestGetData(t *testing.T) {
 }
 
 func TestGetDataByName(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetDataByName(config.RequiredData.Name)
 	if !ok {

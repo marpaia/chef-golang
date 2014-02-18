@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetRoles(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	roles, err := chef.GetRoles()
 	if err != nil {
@@ -17,7 +17,7 @@ func TestGetRoles(t *testing.T) {
 }
 
 func TestGetRole(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetRole(config.RequiredRole.Name)
 	if !ok {

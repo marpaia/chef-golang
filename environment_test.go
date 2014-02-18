@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetEnvironments(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	environments, err := chef.GetEnvironments()
 	if err != nil {
@@ -17,7 +17,7 @@ func TestGetEnvironments(t *testing.T) {
 }
 
 func TestGetEnvironment(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetEnvironment(config.RequiredEnvironment.Name)
 	if !ok {
@@ -29,7 +29,7 @@ func TestGetEnvironment(t *testing.T) {
 }
 
 func TestGetEnvironmentCookbooks(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, err := chef.GetEnvironmentCookbooks(config.RequiredEnvironment.Name)
 	if err != nil {
@@ -38,7 +38,7 @@ func TestGetEnvironmentCookbooks(t *testing.T) {
 }
 
 func TestGetEnvironmentCookbook(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetEnvironmentCookbook(config.RequiredEnvironment.Name, config.RequiredCookbook.Name)
 	if !ok {
@@ -50,7 +50,7 @@ func TestGetEnvironmentCookbook(t *testing.T) {
 }
 
 func TestGetEnvironmentNodes(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, err := chef.GetEnvironmentNodes(config.RequiredEnvironment.Name)
 	if err != nil {
@@ -59,7 +59,7 @@ func TestGetEnvironmentNodes(t *testing.T) {
 }
 
 func TestGetEnvironmentRecipes(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	recipes, err := chef.GetEnvironmentRecipes(config.RequiredEnvironment.Name)
 	if err != nil {
@@ -77,7 +77,7 @@ func TestGetEnvironmentRecipes(t *testing.T) {
 }
 
 func TestGetEnvironmentRole(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	test, ok, err := chef.GetEnvironmentRole(config.RequiredEnvironment.Name, config.RequiredRole.Name)
 	if err != nil {

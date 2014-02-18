@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetPrincipal(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetPrincipal(config.RequiredPrincipal.Name)
 	if !ok {

@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetCookbooks(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	cookbooks, err := chef.GetCookbooks()
 	if err != nil {
 		t.Error(err)
@@ -24,7 +24,7 @@ func TestGetCookbooks(t *testing.T) {
 }
 
 func TestGetCookbook(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetCookbook(config.RequiredCookbook.Name)
 	if !ok {
@@ -36,7 +36,7 @@ func TestGetCookbook(t *testing.T) {
 }
 
 func TestCookbookVersion(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetCookbookVersion(config.RequiredCookbook.Name, config.RequiredCookbook.Version)
 	if !ok {
