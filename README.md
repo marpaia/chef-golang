@@ -32,8 +32,9 @@ package main
 
 import (
     "fmt"
-    "github.com/marpaia/chef-golang"
     "os"
+
+    "github.com/marpaia/chef-golang"
 )
 
 var findNode = "neo4j.example.org"
