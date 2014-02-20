@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetNodes(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	nodes, err := chef.GetNodes()
 	if err != nil {
@@ -17,7 +17,7 @@ func TestGetNodes(t *testing.T) {
 }
 
 func TestGetNode(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetNode(config.RequiredNode.Name)
 	if !ok {

@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetClients(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	clients, err := chef.GetClients()
 	if err != nil {
@@ -17,7 +17,7 @@ func TestGetClients(t *testing.T) {
 }
 
 func TestGetClient(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, ok, err := chef.GetClient(config.RequiredClient.Name)
 	if !ok {

@@ -25,8 +25,7 @@ func init() {
 	}
 }
 
-func testConnectionWrapper() *Chef {
-	t := new(testing.T)
+func testConnectionWrapper(t *testing.T) *Chef {
 	chef, err := Connect()
 	if err != nil {
 		t.Fatal(err)
@@ -100,7 +99,7 @@ func TestReadConfig(t *testing.T) {
 }
 
 func TestApiRequest(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	method := "GET"
 	endpoint := "cookbooks"
 	requestURL := fmt.Sprintf("%s/%s", chef.Url, endpoint)
@@ -135,10 +134,10 @@ func TestResponseBody(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	c := testConnectionWrapper()
+	c := testConnectionWrapper(t)
 	resp, err := c.Get("cookbooks")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -163,46 +162,48 @@ func TestGet(t *testing.T) {
 }
 
 func TestPost(t *testing.T) {
-  c := testConnectionWrapper()
-  config := testConfig()
-  cookbook := config.RequiredCookbook.Name
-  run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
-  resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
-  if err != nil {
-    t.Error(err)
-  }
-  
-  body, err := ioutil.ReadAll(resp.Body)
-  if err != nil {
-    t.Error(err)
-  }
-  
-  // This could or should be better. Be good to have another 
-  // test for unsolvable run_list
-  cookbooks := map[string]interface{}{}
-  json.Unmarshal(body, &cookbooks)
-  found := false
-  for name := range cookbooks {
-    if name == cookbook {
-      found = true
-      break
-    }
-  }
-  if !found {
-    t.Error("Cookbook not solved")
-  }
+	c := testConnectionWrapper(t)
+	config := testConfig()
+	cookbook := config.RequiredCookbook.Name
+	run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
+	resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// This could or should be better. Be good to have another
+	// test for unsolvable run_list
+	cookbooks := map[string]interface{}{}
+	json.Unmarshal(body, &cookbooks)
+	found := false
+	for name := range cookbooks {
+		if name == cookbook {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Cookbook not solved")
+	}
 }
 
 func TestConnect(t *testing.T) {
-	_, err := Connect()
-	if err != nil {
+	if _, err := Connect(); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestApiRequestHeaders(t *testing.T) {
-	chef := testConnectionWrapper()
-	headers := chef.apiRequestHeaders("GET", "/cookbooks", "")
+	chef := testConnectionWrapper(t)
+	headers, err := chef.apiRequestHeaders("GET", "/cookbooks", "")
+	if err != nil {
+		t.Fatal(err)
+	}
 	count := 0
 	for _, requiredHeader := range testRequiredHeaders {
 		for header := range headers {
@@ -218,15 +219,18 @@ func TestApiRequestHeaders(t *testing.T) {
 }
 
 func TestGenerateRequestAuthorization(t *testing.T) {
-	chef := testConnectionWrapper()
-	auth := chef.generateRequestAuthorization("GET", "/cookbooks", "", "2013-10-27T20:45:25Z")
+	chef := testConnectionWrapper(t)
+	auth, err := chef.generateRequestAuthorization("GET", "/cookbooks", "", "2013-10-27T20:45:25Z")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(auth[0]) != 60 {
 		t.Error("Incorrect request authorization string")
 	}
 }
 
 func TestPrivateEncrypt(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	enc, err := chef.privateEncrypt([]byte("encrypt_this"))
 	if err != nil {
 		t.Error(err)
@@ -252,7 +256,7 @@ func TestHashAndBase64(t *testing.T) {
 }
 
 func TestDo(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	req, err := http.NewRequest("GET", "https://www.etsy.com/", nil)
 	if err != nil {
 		t.Error(err)
@@ -265,7 +269,7 @@ func TestDo(t *testing.T) {
 }
 
 func TestGenerateRequest(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	_, err := chef.generateRequest("GET", "cookbooks", nil)
 	if err != nil {
 		t.Error(err)

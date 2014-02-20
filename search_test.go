@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetSearchIndexes(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	results, err := chef.GetSearchIndexes()
 	if err != nil {
@@ -23,7 +23,7 @@ func TestGetSearchIndexes(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	_, err := chef.Search(config.SearchData.Index, config.SearchData.Query)
 	if err != nil {
@@ -34,7 +34,7 @@ func TestSearch(t *testing.T) {
 func TestSearchWithParams(t *testing.T) {}
 
 func TestNewSearchQuery(t *testing.T) {
-	chef := testConnectionWrapper()
+	chef := testConnectionWrapper(t)
 	config := testConfig()
 	query := chef.NewSearchQuery(config.SearchData.Index, config.SearchData.Query)
 	if query.Index != config.SearchData.Index {
