@@ -25,12 +25,30 @@ type Cookbook struct {
 // point in time, such as the name of the cookbook, the description, the
 // license, etc.
 type CookbookVersion struct {
-	Recipes []struct {
-		CookbookItem
-	} `json:"recipes"`
 	Files []struct {
 		CookbookItem
 	} `json:"files"`
+	Definitions []struct {
+		CookbookItem
+	} `json: "definitions"`
+	Libraries []struct {
+		CookbookItem
+	} `json: "libraries"`
+	Attributes []struct {
+		CookbookItem
+	} `json:"attributes"`
+	Recipes []struct {
+		CookbookItem
+	} `json:"recipes"`
+	Providers []struct {
+		CookbookItem
+	} `json: "providers"`
+	Resources []struct {
+		CookbookItem
+	} `json: "resources"`
+	Templates []struct {
+		CookbookItem
+	} `json: "templates"`
 	RootFiles []struct {
 		CookbookItem
 	} `json:"root_file"`
