@@ -1,7 +1,7 @@
 {
     "required_cookbook": {
-        "name": "apache",
-        "version": "0.4.217"
+        "name": "apache2",
+        "version": "1.10.2"
     },
     "required_role": {
         "name": "Neo4j"
@@ -16,7 +16,7 @@
         "name": "production"
     },
     "required_recipe": {
-        "name": "test::default"
+        "name": "test::compile_time"
     },
     "required_user": {
         "name": "admin"

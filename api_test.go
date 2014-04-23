@@ -12,7 +12,7 @@ import (
 
 var testRequiredHeaders []string
 
-var ConfigFilePath = "./test/support/TEST_CONFIG.json"
+var ConfigFilePath = "test/support/TEST_CONFIG.json"
 
 func init() {
 	testRequiredHeaders = []string{

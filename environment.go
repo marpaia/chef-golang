@@ -1,21 +1,21 @@
 package chef
 
 import (
-  "encoding/json"
-  "fmt"
-  "strings"
+	"encoding/json"
+	"fmt"
+	"strings"
 )
 
 // chef.Environment dinfes the relevant parameters of a Chef environment. This
 // includes the name of the environment, the description strings, etc.
 type Environment struct {
-  Name               string                 `json:"name"`
-  Description        string                 `json:"description"`
-  CookbookVersions   map[string]string      `json:"cookbook_versions"`
-  JSONClass          string                 `json:"json_class"`
-  ChefType           string                 `json:"chef_type"`
-  DefaultAttributes  map[string]interface{} `json:"default_attributes"`
-  OverrideAttributes map[string]interface{} `json:"override_attributes"`
+	Name               string                 `json:"name"`
+	Description        string                 `json:"description"`
+	CookbookVersions   map[string]string      `json:"cookbook_versions"`
+	JSONClass          string                 `json:"json_class"`
+	ChefType           string                 `json:"chef_type"`
+	DefaultAttributes  map[string]interface{} `json:"default_attributes"`
+	OverrideAttributes map[string]interface{} `json:"override_attributes"`
 }
 
 // chef.GetEnvironments returns a map of environment names to the environment's
@@ -35,19 +35,19 @@ type Environment struct {
 //         fmt.Println(environment)
 //      }
 func (chef *Chef) GetEnvironments() (map[string]string, error) {
-  resp, err := chef.Get("environments")
-  if err != nil {
-    return nil, err
-  }
-  body, err := responseBody(resp)
-  if err != nil {
-    return nil, err
-  }
+	resp, err := chef.Get("environments")
+	if err != nil {
+		return nil, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		return nil, err
+	}
 
-  environments := map[string]string{}
-  json.Unmarshal(body, &environments)
+	environments := map[string]string{}
+	json.Unmarshal(body, &environments)
 
-  return environments, nil
+	return environments, nil
 }
 
 // chef.GetEnvironment accepts a string which represents the name of a Chef
@@ -73,22 +73,22 @@ func (chef *Chef) GetEnvironments() (map[string]string, error) {
 //         fmt.Printf("%#v\n", environment)
 //     }
 func (chef *Chef) GetEnvironment(name string) (*Environment, bool, error) {
-  resp, err := chef.Get(fmt.Sprintf("environments/%s", name))
-  if err != nil {
-    return nil, false, err
-  }
-  body, err := responseBody(resp)
-  if err != nil {
-    if strings.Contains(err.Error(), "404") {
-      return nil, false, nil
-    }
-    return nil, false, err
-  }
+	resp, err := chef.Get(fmt.Sprintf("environments/%s", name))
+	if err != nil {
+		return nil, false, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
 
-  environment := new(Environment)
-  json.Unmarshal(body, environment)
+	environment := new(Environment)
+	json.Unmarshal(body, environment)
 
-  return environment, true, nil
+	return environment, true, nil
 }
 
 // chef.GetEnvironmentCookbooks accepts a string which represents the name of a
@@ -108,19 +108,19 @@ func (chef *Chef) GetEnvironment(name string) (*Environment, bool, error) {
 //         fmt.Println(name, cookbook.Version[0])
 //      }
 func (chef *Chef) GetEnvironmentCookbooks(name string) (map[string]*Cookbook, error) {
-  resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks", name))
-  if err != nil {
-    return nil, err
-  }
-  body, err := responseBody(resp)
-  if err != nil {
-    return nil, err
-  }
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks", name))
+	if err != nil {
+		return nil, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		return nil, err
+	}
 
-  cookbooks := map[string]*Cookbook{}
-  json.Unmarshal(body, &cookbooks)
+	cookbooks := map[string]*Cookbook{}
+	json.Unmarshal(body, &cookbooks)
 
-  return cookbooks, nil
+	return cookbooks, nil
 }
 
 // chef.GetEnvironmentCookbook accepts a string which represents the name of a
@@ -144,22 +144,22 @@ func (chef *Chef) GetEnvironmentCookbooks(name string) (map[string]*Cookbook, er
 //         fmt.Printf("%#v\n", cookbook)
 //     }
 func (chef *Chef) GetEnvironmentCookbook(env, cb string) (*Cookbook, bool, error) {
-  resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks/%s", env, cb))
-  if err != nil {
-    return nil, false, err
-  }
-  body, err := responseBody(resp)
-  if err != nil {
-    if strings.Contains(err.Error(), "404") {
-      return nil, false, nil
-    }
-    return nil, false, err
-  }
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks/%s", env, cb))
+	if err != nil {
+		return nil, false, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
 
-  cookbook := map[string]*Cookbook{}
-  json.Unmarshal(body, &cookbook)
+	cookbook := map[string]*Cookbook{}
+	json.Unmarshal(body, &cookbook)
 
-  return cookbook[cb], true, nil
+	return cookbook[cb], true, nil
 }
 
 // chef.GetEnvironmentNodes accepts a string which represents the name of a
@@ -181,19 +181,19 @@ func (chef *Chef) GetEnvironmentCookbook(env, cb string) (*Cookbook, bool, error
 //         fmt.Println(node)
 //      }
 func (chef *Chef) GetEnvironmentNodes(name string) (map[string]string, error) {
-  resp, err := chef.Get(fmt.Sprintf("environments/%s/nodes", name))
-  if err != nil {
-    return nil, err
-  }
-  body, err := responseBody(resp)
-  if err != nil {
-    return nil, err
-  }
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/nodes", name))
+	if err != nil {
+		return nil, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		return nil, err
+	}
 
-  nodes := map[string]string{}
-  json.Unmarshal(body, &nodes)
+	nodes := map[string]string{}
+	json.Unmarshal(body, &nodes)
 
-  return nodes, nil
+	return nodes, nil
 }
 
 // chef.GetEnvironmentRecipes accepts a string which represents the name of a
@@ -213,19 +213,19 @@ func (chef *Chef) GetEnvironmentNodes(name string) (map[string]string, error) {
 //         fmt.Println(recipe)
 //      }
 func (chef *Chef) GetEnvironmentRecipes(name string) ([]string, error) {
-  resp, err := chef.Get(fmt.Sprintf("environments/%s/recipes", name))
-  if err != nil {
-    return nil, err
-  }
-  body, err := responseBody(resp)
-  if err != nil {
-    return nil, err
-  }
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/recipes", name))
+	if err != nil {
+		return nil, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		return nil, err
+	}
 
-  recipes := []string{}
-  json.Unmarshal(body, &recipes)
+	recipes := []string{}
+	json.Unmarshal(body, &recipes)
 
-  return recipes, nil
+	return recipes, nil
 }
 
 // chef.GetEnvironmentRole accepts a string which represents the name of a
@@ -250,20 +250,20 @@ func (chef *Chef) GetEnvironmentRecipes(name string) ([]string, error) {
 //         fmt.Println(role)
 //     }
 func (chef *Chef) GetEnvironmentRole(env, rol string) (map[string][]string, bool, error) {
-  resp, err := chef.Get(fmt.Sprintf("environments/%s/roles/%s", env, rol))
-  if err != nil {
-    return nil, false, err
-  }
-  body, err := responseBody(resp)
-  if err != nil {
-    if strings.Contains(err.Error(), "404") {
-      return nil, false, nil
-    }
-    return nil, false, err
-  }
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/roles/%s", env, rol))
+	if err != nil {
+		return nil, false, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
 
-  role := map[string][]string{}
-  json.Unmarshal(body, &role)
+	role := map[string][]string{}
+	json.Unmarshal(body, &role)
 
-  return role, true, nil
+	return role, true, nil
 }
