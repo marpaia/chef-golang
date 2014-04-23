@@ -26,3 +26,4 @@ cp $basedir/keys/* $rundir/
 cp $basedir/seed_data/* $rundir/
 
 goiardi -A -V -H localhost -P 8443 -D $rundir/data -i $rundir/index -F 30  --conf-root $rundir &
+cd $basedir/../../
