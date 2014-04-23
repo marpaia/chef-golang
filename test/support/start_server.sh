@@ -25,4 +25,4 @@ go get github.com/ctdk/goiardi
 cp $basedir/keys/* $rundir/
 cp $basedir/seed_data/* $rundir/
 
-goiardi -V -H localhost -P 8443 -D $rundir/data -i $rundir/index -F 30  -A  --conf-root $rundir
+goiardi -V -H localhost -P 8443 -D $rundir/data -i $rundir/index -F 30  -A  --conf-root $rundir &

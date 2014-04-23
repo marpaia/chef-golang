@@ -1,0 +1,8 @@
+language: go
+
+go:
+  - 1.2
+  - tip
+
+before_script:
+  - test/support/start_server.sh
