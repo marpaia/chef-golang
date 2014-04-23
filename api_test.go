@@ -12,7 +12,7 @@ import (
 
 var testRequiredHeaders []string
 
-var ConfigFilePath = "./TEST_CONFIG.json"
+var ConfigFilePath = "./test/support/TEST_CONFIG.json"
 
 func init() {
 	testRequiredHeaders = []string{
@@ -61,9 +61,6 @@ type testConfigFile struct {
 	RequiredData struct {
 		Name string `json:"name"`
 	} `json:"required_data"`
-	RequiredPrincipal struct {
-		Name string `json:"name"`
-	} `json:"required_principal"`
 	SearchData struct {
 		Index string `json:"index"`
 		Query string `json:"query"`
@@ -75,6 +72,9 @@ type testConfigFile struct {
 		UserId  string `json:"user_name"`
 		Key     string `json:"key"`
 	} `json:"test_credentials"`
+	RequiredPrincipal struct {
+		Name string `json:"name"`
+	} `json:"required_principal"`
 	KeyPath   string `json:"key_path"`
 	KeyString string `json:"key_string"`
 }
