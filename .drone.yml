@@ -1,10 +1,10 @@
 image: go1.2
 
 script:
- - test/support/chef_config.sh
- - go get -v github.com/ctdk/goiardi
- - test/support/start_server.sh
- - go get -v
- - go build
- - go test
- - test/support/stop_server.sh
+  - test/support/chef_config.sh
+  - go get -v github.com/ctdk/goiardi
+  - test/support/start_server.sh
+  - go get -v
+  - go build
+  - go test
+  - test/support/stop_server.sh

@@ -2,11 +2,15 @@ language: go
 
 go:
   - 1.2
-  - tip
+
 install:
   - go get -v github.com/ctdk/goiardi
-  - go get -v ./...
+  - go get -v
 
-before_script:
+script:
   - test/support/chef_config.sh
   - test/support/start_server.sh
+  - go build
+  - go test
+  - test/support/stop_server.sh
+
