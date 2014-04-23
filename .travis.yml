@@ -8,4 +8,5 @@ install:
   - go get -v ./...
 
 before_script:
+  - test/support/chef_config.sh
   - test/support/start_server.sh

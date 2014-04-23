@@ -21,10 +21,9 @@ popd > /dev/null
 
 go get github.com/ctdk/goiardi
 
-
 cp $basedir/keys/* $rundir/
 cp $basedir/seed_data/* $rundir/
-cp $basedir/TEST_CONFIG.json $rundir/
 
 goiardi -A -V -H localhost -P 8443 -D $rundir/data -i $rundir/index -F 30  --conf-root $rundir &
 cd $basedir/../../
+pwd

@@ -79,7 +79,7 @@ type testConfigFile struct {
 
 func testConfig() *testConfigFile {
 	// get abs filepath to the stored config
-	file, err := ioutil.ReadFile("/tmp/goiardi/TEST_CONFIG.json")
+	file, err := ioutil.ReadFile("test/support/TEST_CONFIG.json")
 	t := new(testing.T)
 	if err != nil {
 		t.Error(err)
