@@ -3,6 +3,9 @@ language: go
 go:
   - 1.2
   - tip
+install:
+  - go get -v github.com/ctdk/goiardi
+  - go get -v ./...
 
 before_script:
   - test/support/start_server.sh
