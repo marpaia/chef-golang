@@ -5,14 +5,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
 
 var testRequiredHeaders []string
 
-var ConfigFilePath = "./TEST_CONFIG.json"
+// get abs filepath to the stored config
+var _, filename, _, _ = runtime.Caller(1)
+var ConfigFilePath, err = os.Open(path.Join(path.Dir(filename), "test/support/TEST_CONFIG.json"))
 
 func init() {
 	testRequiredHeaders = []string{
@@ -81,7 +86,6 @@ type testConfigFile struct {
 
 func testConfig() *testConfigFile {
 	t := new(testing.T)
-	println("Configfile path: ", ConfigFilePath)
 	file, err := ioutil.ReadFile(ConfigFilePath)
 	if err != nil {
 		t.Error(err)
@@ -166,8 +170,8 @@ func TestPost(t *testing.T) {
 	c := testConnectionWrapper(t)
 	config := testConfig()
 	cookbook := config.RequiredCookbook.Name
-	runList := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
-	resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", runList)
+	run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
+	resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +213,7 @@ func TestApiRequestHeaders(t *testing.T) {
 	for _, requiredHeader := range testRequiredHeaders {
 		for header := range headers {
 			if strings.ToLower(requiredHeader) == strings.ToLower(header) {
-				count++
+				count += 1
 				break
 			}
 		}
