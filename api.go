@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -211,6 +212,19 @@ func keyFromString(key []byte) (*rsa.PrivateKey, error) {
 	return rsaKey, nil
 }
 
+// This func will take a string map and return a url.Vlalues struct suitable
+// for using in a request
+func mapToForm(params map[string]string) url.Values {
+	values := make(url.Values)
+	if params == nil {
+		return values
+	}
+	for k, v := range params {
+		values.Set(k, v)
+	}
+	return values
+}
+
 // Get makes an authenticated HTTP request to the Chef server for the supplied
 // endpoint
 func (chef *Chef) Get(endpoint string) (*http.Response, error) {
@@ -221,28 +235,24 @@ func (chef *Chef) Get(endpoint string) (*http.Response, error) {
 // GetWithParams makes an authenticated HTTP request to the Chef server for the
 // supplied endpoint and also includes GET query string parameters
 func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*http.Response, error) {
-	values := make(url.Values)
-	for k, v := range params {
-		values.Set(k, v)
-	}
 	request, _ := http.NewRequest("GET", chef.requestUrl(endpoint), nil)
-	request.Form = values
+	request.Form = mapToForm(params)
 	return chef.makeRequest(request)
 }
 
 // PostForm makes an authenticated POST request to the Chef server With params for the supplied
 // endpoint
 func (chef *Chef) PostForm(endpoint string, params map[string]string) (*http.Response, error) {
-	//TODO: Finish This
 	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), nil)
+	request.Form = mapToForm(params)
 	return chef.makeRequest(request)
 }
 
-// Post  post an io object to the chef server this uses standard http.Post, make sure you close
-// your io or send io.Closer
-func (chef *Chef) Post(endpoint string, body io.Reader) (*http.Response, error) {
-	//TODO: Finish this
-	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), nil)
+// Post  post an io object to the chef server this uses standard http.Post
+// params are optional.
+func (chef *Chef) Post(endpoint string, params map[string]string, body io.Reader) (*http.Response, error) {
+	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), body)
+	request.Form = mapToForm(params)
 	return chef.makeRequest(request)
 }
 
@@ -294,16 +304,16 @@ func hashStr(toHash string) string {
 }
 
 // also from goiardi calc and encodebody data
-func calcBodyHash(r *http.Request) string {
+func calcBodyHash(r *http.Request) (string, error) {
 	var bodyStr string
+	var err error
 	if r.Body == nil {
 		bodyStr = ""
 	} else {
-		var err error
 		save := r.Body
 		save, r.Body, err = drainBody(r.Body)
 		if err != nil {
-			return ""
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(r.Body)
@@ -311,7 +321,7 @@ func calcBodyHash(r *http.Request) string {
 		r.Body = save
 	}
 	chkHash := hashStr(bodyStr)
-	return chkHash
+	return chkHash, err
 }
 
 // liberated from net/http/httputil
@@ -429,25 +439,35 @@ func (chef *Chef) generateRequestAuthorization(request *http.Request) ([]string,
 	return base64BlockEncode([]byte(string(signature))), nil
 }
 
-// apiRequestHeaders generates a map of all of the request headers that a
-// request to the Chef API will need
+// apiRequestHeaders attache chef-server headers to the request
 func (chef *Chef) apiRequestHeaders(request *http.Request) error {
+	body_hash, err := calcBodyHash(request)
+	if err != nil {
+		return err
+	}
+
+	// sanitize the path for the chef-server
+	// chef-server doesn't support '//' in the Hash Path.
+	path := path.Clean(request.URL.Path)
+	request.URL.Path = path
+
 	timestamp := getTimestamp()
 	request.Header.Set("Method", request.Method)
-	request.Header.Set("Hashed Path", hashStr(request.URL.Path))
+	request.Header.Set("Hashed Path", hashStr(path))
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("X-Chef-Version", chef.Version)
 	request.Header.Set("X-Ops-Timestamp", timestamp)
 	request.Header.Set("X-Ops-Userid", chef.UserId)
 	request.Header.Set("X-Ops-Sign", "version=1.0")
-	request.Header.Set("X-Ops-Content-Hash", calcBodyHash(request))
+	request.Header.Set("X-Ops-Content-Hash", body_hash)
 
+	// generate signed string of headers
 	auths, err := chef.generateRequestAuthorization(request)
 	if err != nil {
 		return err
 	}
 
-	// roll over the auth block and add the apropriate header
+	// roll over the auth slice and add the apropriate header
 	for index, value := range auths {
 		request.Header.Set(fmt.Sprintf("X-Ops-Authorization-%d", index+1), string(value))
 	}

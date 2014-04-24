@@ -123,7 +123,7 @@ func TestResponseBody(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	c := testConnectionWrapper(t)
-	resp, err := c.Get("cookbooks")
+	resp, err := c.Get("/cookbooks")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +154,7 @@ func TestPost(t *testing.T) {
 	config := testConfig()
 	cookbook := config.RequiredCookbook.Name
 	run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
-	resp, err := c.Post("/environments/_default/cookbook_versions", run_list)
+	resp, err := c.Post("/environments/_default/cookbook_versions", nil, run_list)
 	if err != nil {
 		t.Fatal(err)
 	}
