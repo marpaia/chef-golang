@@ -45,6 +45,7 @@ func Connect() (*Chef, error) {
 		knifeFiles = append(knifeFiles, filepath.Join(homedir, ".chef/knife.rb"))
 	}
 	knifeFiles = append(knifeFiles, "/etc/chef/client.rb")
+	knifeFiles = append(knifeFiles, "test/support/knife.rb")
 	var knifeFile string
 	for _, each := range knifeFiles {
 		if _, err := os.Stat(each); err == nil {
