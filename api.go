@@ -339,6 +339,8 @@ func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
 	return ioutil.NopCloser(&buf), ioutil.NopCloser(bytes.NewBuffer(buf.Bytes())), nil
 }
 
+// base64BlockEncode takes a byte slice and breaks it up into a slice of strings
+// where each string is 60 characters long
 func base64BlockEncode(content []byte) []string {
 	resultString := base64.StdEncoding.EncodeToString(content)
 	var resultSlice []string
