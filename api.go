@@ -11,7 +11,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -161,6 +160,9 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	}
 
 	chef.Key = rsaKey
+	if chef.Version == "" {
+		chef.Version = "11.6.0"
+	}
 	return chef, nil
 }
 
@@ -265,17 +267,10 @@ func (chef *Chef) requestUrl(endpoint string) string {
 	return fmt.Sprintf("%s/%s", chef.Url, endpoint)
 }
 
-// sign request takes a pointer to a http.Request and sets up the authentication
-// headers so that it can be used against chef-server
-func (chef *Chef) SignRequest(request *http.Request) {
-	//TODO
-}
-
 // makeRequest
 // Take a request object, Setup Auth headers and Send it to the server
 func (chef *Chef) makeRequest(request *http.Request) (*http.Response, error) {
-	chef.SignRequest(request)
-
+	chef.apiRequestHeaders(request)
 	var client *http.Client
 	if chef.SSLNoVerify {
 		tr := &http.Transport{
@@ -289,8 +284,51 @@ func (chef *Chef) makeRequest(request *http.Request) (*http.Response, error) {
 	return client.Do(request)
 }
 
-// base64BlockEncode takes a byte slice and breaks it up into a slice of strings
-// where each string is 60 characters long
+// pulled from goiardi
+// encode a string suitable for auth header
+func hashStr(toHash string) string {
+	h := sha1.New()
+	io.WriteString(h, toHash)
+	hashed := base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return hashed
+}
+
+// also from goiardi calc and encodebody data
+func calcBodyHash(r *http.Request) string {
+	var bodyStr string
+	if r.Body == nil {
+		bodyStr = ""
+	} else {
+		var err error
+		save := r.Body
+		save, r.Body, err = drainBody(r.Body)
+		if err != nil {
+			return ""
+		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(r.Body)
+		bodyStr = buf.String()
+		r.Body = save
+	}
+	chkHash := hashStr(bodyStr)
+	return chkHash
+}
+
+// liberated from net/http/httputil
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
+	var buf bytes.Buffer
+	if _, err = buf.ReadFrom(b); err != nil {
+		return nil, nil, err
+	}
+	if err = b.Close(); err != nil {
+		return nil, nil, err
+	}
+	return ioutil.NopCloser(&buf), ioutil.NopCloser(bytes.NewBuffer(buf.Bytes())), nil
+}
+
 func base64BlockEncode(content []byte) []string {
 	resultString := base64.StdEncoding.EncodeToString(content)
 	var resultSlice []string
@@ -306,21 +344,6 @@ func base64BlockEncode(content []byte) []string {
 	}
 
 	return resultSlice
-}
-
-// hashAndBase64 takes a string a returns a base64 representation of the hash of
-// the string in \n seperated 60 character long blocks (don't ask, it's a Chef
-// thing apparently)
-func hashAndBase64(content io.Reader) string {
-	if content == nil {
-		content = bytes.NewBufferString("")
-	}
-	h := sha1.New()
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(content)
-	io.WriteString(h, buf.String())
-	hashed := base64.StdEncoding.EncodeToString(h.Sum(nil))
-	return hashed
 }
 
 // getTimestamp returns an ISO-8601 formatted timestamp of the current time in
@@ -390,16 +413,15 @@ func (chef *Chef) privateEncrypt(data []byte) (enc []byte, err error) {
 	return
 }
 
-// generateRequestAuthorization returns a string slice of the Chef server
-// authorization headers
-func (chef *Chef) generateRequestAuthorization(request *http.Request, timestamp string) ([]string, error) {
-	path := &request.URL.Path
+// generateRequestAuthorization returns a srting slice of the signed headers
+// It assumes you have calculated and put the required headers on the request
+func (chef *Chef) generateRequestAuthorization(request *http.Request) ([]string, error) {
 	var content string
-	content += fmt.Sprintf("Method:%s\n", &request.Method)
-	content += fmt.Sprintf("Hashed Path:%s\n", hashAndBase64(bytes.NewBufferString(*path)))
-	content += fmt.Sprintf("X-Ops-Content-Hash:%s\n", hashAndBase64(request.Body))
-	content += fmt.Sprintf("X-Ops-Timestamp:%s\n", timestamp)
-	content += fmt.Sprintf("X-Ops-UserId:%s", chef.UserId)
+	content += fmt.Sprintf("Method:%s\n", request.Header.Get("Method"))
+	content += fmt.Sprintf("Hashed Path:%s\n", request.Header.Get("Hashed Path"))
+	content += fmt.Sprintf("X-Ops-Content-Hash:%s\n", request.Header.Get("X-Ops-Content-Hash"))
+	content += fmt.Sprintf("X-Ops-Timestamp:%s\n", request.Header.Get("X-Ops-Timestamp"))
+	content += fmt.Sprintf("X-Ops-UserId:%s", request.Header.Get("X-Ops-UserId"))
 	signature, err := chef.privateEncrypt([]byte(content))
 	if err != nil {
 		return nil, err
@@ -411,29 +433,25 @@ func (chef *Chef) generateRequestAuthorization(request *http.Request, timestamp 
 // request to the Chef API will need
 func (chef *Chef) apiRequestHeaders(request *http.Request) error {
 	timestamp := getTimestamp()
-	headers := map[string]string{
-		"accept":             "application/json",
-		"x-chef-version":     chef.Version,
-		"x-ops-timestamp":    timestamp,
-		"x-ops-userid":       chef.UserId,
-		"x-ops-sign":         "version=1.0",
-		"x-ops-content-hash": hashAndBase64(request.Body),
-	}
+	request.Header.Set("Method", request.Method)
+	request.Header.Set("Hashed Path", hashStr(request.URL.Path))
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("X-Chef-Version", chef.Version)
+	request.Header.Set("X-Ops-Timestamp", timestamp)
+	request.Header.Set("X-Ops-Userid", chef.UserId)
+	request.Header.Set("X-Ops-Sign", "version=1.0")
+	request.Header.Set("X-Ops-Content-Hash", calcBodyHash(request))
 
-	auths, err := chef.generateRequestAuthorization(request, timestamp)
+	auths, err := chef.generateRequestAuthorization(request)
 	if err != nil {
 		return err
 	}
+
+	// roll over the auth block and add the apropriate header
 	for index, value := range auths {
-		headers[fmt.Sprintf("X-Ops-Authorization-%d", index+1)] = string(value)
+		request.Header.Set(fmt.Sprintf("X-Ops-Authorization-%d", index+1), string(value))
 	}
 
-	// Write headers to the request
-	for k, v := range headers {
-		request.Header.Add(k, v)
-	}
-	//DBG
-	spew.Dump(&request)
 	return nil
 }
 

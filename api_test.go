@@ -1,10 +1,8 @@
 package chef
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -33,7 +31,7 @@ func testConnectionWrapper(t *testing.T) *Chef {
 		t.Fatal(err)
 	}
 	chef.SSLNoVerify = true
-
+	chef.Version = "11.6.0"
 	return chef
 }
 
@@ -100,8 +98,8 @@ func TestReadConfig(t *testing.T) {
 	_ = testConfig()
 }
 
-func TestHashAndBase64(t *testing.T) {
-	if len(hashAndBase64(bytes.NewBufferString("hash_this"))) != 28 {
+func TestHashStr(t *testing.T) {
+	if len(hashStr("hash_this")) != 28 {
 		t.Error("Wrong length for hashAndBase64")
 	}
 }
@@ -139,7 +137,6 @@ func TestGet(t *testing.T) {
 	json.Unmarshal(body, &cookbooks)
 	found := false
 	config := testConfig()
-	spew.Dump(&cookbooks)
 	cookbook := config.RequiredCookbook.Name
 	for name := range cookbooks {
 		if name == cookbook {
@@ -192,7 +189,7 @@ func TestConnect(t *testing.T) {
 func TestGenerateRequestAuthorization(t *testing.T) {
 	chef := testConnectionWrapper(t)
 	request, err := http.NewRequest("GET", chef.requestUrl("/cookbooks"), nil)
-	auth, err := chef.generateRequestAuthorization(request, "2013-10-27T20:45:25Z")
+	auth, err := chef.generateRequestAuthorization(request)
 	if err != nil {
 		t.Fatal(err)
 	}
