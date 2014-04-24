@@ -1,8 +1,10 @@
 package chef
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -11,6 +13,8 @@ import (
 )
 
 var testRequiredHeaders []string
+
+var ConfigFilePath = "test/support/TEST_CONFIG.json"
 
 func init() {
 	testRequiredHeaders = []string{
@@ -78,8 +82,7 @@ type testConfigFile struct {
 }
 
 func testConfig() *testConfigFile {
-	// get abs filepath to the stored config
-	file, err := ioutil.ReadFile("test/support/TEST_CONFIG.json")
+	file, err := ioutil.ReadFile(ConfigFilePath)
 	t := new(testing.T)
 	if err != nil {
 		t.Error(err)
@@ -97,21 +100,9 @@ func TestReadConfig(t *testing.T) {
 	_ = testConfig()
 }
 
-func TestApiRequest(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	method := "GET"
-	endpoint := "cookbooks"
-	requestURL := fmt.Sprintf("%s/%s", chef.Url, endpoint)
-	req, err := http.NewRequest(method, requestURL, nil)
-	if err != nil {
-		t.Error(err)
-	}
-	chef.apiRequest(req, method, fmt.Sprintf("/%s", endpoint), "")
-
-	for _, value := range testRequiredHeaders {
-		if req.Header.Get(value) == "" {
-			t.Error("Couldn't find header:", value)
-		}
+func TestHashAndBase64(t *testing.T) {
+	if len(hashAndBase64(bytes.NewBufferString("hash_this"))) != 28 {
+		t.Error("Wrong length for hashAndBase64")
 	}
 }
 
@@ -148,6 +139,7 @@ func TestGet(t *testing.T) {
 	json.Unmarshal(body, &cookbooks)
 	found := false
 	config := testConfig()
+	spew.Dump(&cookbooks)
 	cookbook := config.RequiredCookbook.Name
 	for name := range cookbooks {
 		if name == cookbook {
@@ -165,7 +157,7 @@ func TestPost(t *testing.T) {
 	config := testConfig()
 	cookbook := config.RequiredCookbook.Name
 	run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
-	resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
+	resp, err := c.Post("/environments/_default/cookbook_versions", run_list)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,15 +189,29 @@ func TestConnect(t *testing.T) {
 	}
 }
 
+func TestGenerateRequestAuthorization(t *testing.T) {
+	chef := testConnectionWrapper(t)
+	request, err := http.NewRequest("GET", chef.requestUrl("/cookbooks"), nil)
+	auth, err := chef.generateRequestAuthorization(request, "2013-10-27T20:45:25Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(auth[0]) != 60 {
+		t.Error("Incorrect request authorization string")
+	}
+}
+
 func TestApiRequestHeaders(t *testing.T) {
 	chef := testConnectionWrapper(t)
-	headers, err := chef.apiRequestHeaders("GET", "/cookbooks", "")
+	request, _ := http.NewRequest("GET", chef.requestUrl("/cookbooks"), nil)
+	err := chef.apiRequestHeaders(request)
 	if err != nil {
+		println("failed to generate RequestHeaders")
 		t.Fatal(err)
 	}
 	count := 0
 	for _, requiredHeader := range testRequiredHeaders {
-		for header := range headers {
+		for header := range request.Header {
 			if strings.ToLower(requiredHeader) == strings.ToLower(header) {
 				count += 1
 				break
@@ -214,17 +220,6 @@ func TestApiRequestHeaders(t *testing.T) {
 	}
 	if count != len(testRequiredHeaders) {
 		t.Error("apiRequestHeaders didn't return all of testRequiredHeaders")
-	}
-}
-
-func TestGenerateRequestAuthorization(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	auth, err := chef.generateRequestAuthorization("GET", "/cookbooks", "", "2013-10-27T20:45:25Z")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(auth[0]) != 60 {
-		t.Error("Incorrect request authorization string")
 	}
 }
 
@@ -245,33 +240,6 @@ func TestBase64BlockEncode(t *testing.T) {
 	expected := []string{"YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXphYmNkZWZnaGlqa2xtbm9wcXJz", "dHV2d3h5emFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6"}
 	if !reflect.DeepEqual(results, expected) {
 		t.Error("Results not matching")
-	}
-}
-
-func TestHashAndBase64(t *testing.T) {
-	if len(hashAndBase64("hash_this")) != 28 {
-		t.Error("Wrong length for hashAndBase64")
-	}
-}
-
-func TestDo(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	req, err := http.NewRequest("GET", "https://www.etsy.com/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = chef.Do(req)
-	if err != nil {
-		t.Error(err)
-	}
-
-}
-
-func TestGenerateRequest(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	_, err := chef.generateRequest("GET", "cookbooks", nil)
-	if err != nil {
-		t.Error(err)
 	}
 }
 
