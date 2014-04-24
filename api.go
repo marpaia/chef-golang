@@ -143,7 +143,7 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	case "80":
 		url = fmt.Sprintf("http://%s", chef.Host)
 	default:
-		url = fmt.Sprintf("%s:%d", chef.Host, chef.Port)
+		url = fmt.Sprintf("%s:%s", chef.Host, chef.Port)
 	}
 
 	chef.Url = url
