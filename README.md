@@ -1,9 +1,8 @@
+[![Build Status](https://drone.io/github.com/marpaia/chef-golang/status.png)](https://drone.io/github.com/marpaia/chef-golang/latest)
+
 chef-golang
 ===========
-
 This is a Go API client for Opscode's Chef.
-
-[![Build Status](https://drone.io/github.com/marpaia/chef-golang/status.png)](https://drone.io/github.com/marpaia/chef-golang/latest)
 
 ## Installation
 
