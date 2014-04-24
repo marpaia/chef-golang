@@ -344,7 +344,7 @@ func base64BlockEncode(content []byte) []string {
 	var resultSlice []string
 	index := 0
 
-	for i := 0; i < len(resultString)/60; i += 1 {
+	for i := 0; i < len(resultString)/60; i++ {
 		resultSlice = append(resultSlice, resultString[index:index+60])
 		index += 60
 	}
