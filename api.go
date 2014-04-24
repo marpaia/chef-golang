@@ -2,6 +2,7 @@ package chef
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/tls"
@@ -16,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -141,7 +143,7 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	case "80":
 		url = fmt.Sprintf("http://%s", chef.Host)
 	default:
-		url = fmt.Sprintf("%s:%d", chef.Host, chef.Port)
+		url = fmt.Sprintf("%s:%s", chef.Host, chef.Port)
 	}
 
 	chef.Url = url
@@ -159,7 +161,9 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	}
 
 	chef.Key = rsaKey
-
+	if chef.Version == "" {
+		chef.Version = "11.6.0"
+	}
 	return chef, nil
 }
 
@@ -208,98 +212,75 @@ func keyFromString(key []byte) (*rsa.PrivateKey, error) {
 	return rsaKey, nil
 }
 
+// This func will take a string map and return a url.Vlalues struct suitable
+// for using in a request
+func mapToForm(params map[string]string) url.Values {
+	values := make(url.Values)
+	if params == nil {
+		return values
+	}
+	for k, v := range params {
+		values.Set(k, v)
+	}
+	return values
+}
+
 // Get makes an authenticated HTTP request to the Chef server for the supplied
 // endpoint
 func (chef *Chef) Get(endpoint string) (*http.Response, error) {
-	return chef.makeRequest("GET", endpoint, nil)
+	request, _ := http.NewRequest("GET", chef.requestUrl(endpoint), nil)
+	return chef.makeRequest(request)
 }
 
 // GetWithParams makes an authenticated HTTP request to the Chef server for the
 // supplied endpoint and also includes GET query string parameters
 func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*http.Response, error) {
-	return chef.makeRequest("GET", endpoint, params)
+	request, _ := http.NewRequest("GET", chef.requestUrl(endpoint), nil)
+	request.Form = mapToForm(params)
+	return chef.makeRequest(request)
 }
 
 // PostForm makes an authenticated POST request to the Chef server With params for the supplied
 // endpoint
 func (chef *Chef) PostForm(endpoint string, params map[string]string) (*http.Response, error) {
-	return chef.makeRequest("POST", endpoint, params)
+	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), nil)
+	request.Form = mapToForm(params)
+	return chef.makeRequest(request)
 }
 
-// Post  post an io object to the chef server this uses standard http.Post, make sure you close
-// your io or send io.Closer
-func (chef *Chef) Post(endpoint string, bodyType string, body io.Reader) (*http.Response, error) {
-	requestURL := fmt.Sprintf("%s/%s", chef.Url, endpoint)
-	req, err := http.NewRequest("POST", requestURL, body)
-	if err != nil {
-		return nil, err
-	}
-
-	// add chef auth headers
-	headers, err := chef.apiRequestHeaders("POST", endpoint, "")
-	if err != nil {
-		return nil, err
-	}
-	for key, value := range headers {
-		req.Header.Add(key, value)
-	}
-
-	// make the request
-	return chef.Do(req)
+// Post  post an io object to the chef server this uses standard http.Post
+// params are optional.
+func (chef *Chef) Post(endpoint string, params map[string]string, body io.Reader) (*http.Response, error) {
+	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), body)
+	request.Form = mapToForm(params)
+	return chef.makeRequest(request)
 }
 
 // Put makes an authenticated PUT request to the Chef server for the supplied
 // endpoint
 func (chef *Chef) Put(endpoint string, params map[string]string) (*http.Response, error) {
-	return chef.makeRequest("PUT", endpoint, params)
+	//TODO: Finish this
+	request, _ := http.NewRequest("PUT", chef.requestUrl(endpoint), nil)
+	return chef.makeRequest(request)
 }
 
 // Delete makes an authenticated DELETE request to the Chef server for the
 // supplied endpoint
 func (chef *Chef) Delete(endpoint string, params map[string]string) (*http.Response, error) {
-	return chef.makeRequest("DELETE", endpoint, params)
+	//TODO: Finish this
+	request, _ := http.NewRequest("DELETE", chef.requestUrl(endpoint), nil)
+	return chef.makeRequest(request)
 }
 
-// generateRequest generates a request object
-func (chef *Chef) generateRequest(method, endpoint string, params map[string]string) (*http.Request, error) {
-	requestURL := fmt.Sprintf("%s/%s", chef.Url, endpoint)
-	req, err := http.NewRequest(method, requestURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Form = url.Values{}
-	body := url.Values{}
-	for key, value := range params {
-		req.Form.Add(key, value)
-		if method != "GET" {
-			body.Add(key, value)
-		}
-	}
-	chef.apiRequest(req, method, req.URL.Path, body.Encode())
-
-	if method == "GET" && len(params) > 0 {
-		urlParams := req.URL.Query()
-		for key, value := range params {
-			urlParams.Set(key, value)
-		}
-		req.URL.RawQuery = urlParams.Encode()
-	}
-
-	return req, nil
+// requestUrl generate the requestUrl from supplied endpoint
+func (chef *Chef) requestUrl(endpoint string) string {
+	return fmt.Sprintf("%s/%s", chef.Url, endpoint)
 }
 
-// makeRequest builds a generic HTTP request
-func (chef *Chef) makeRequest(method, endpoint string, params map[string]string) (*http.Response, error) {
-	req, err := chef.generateRequest(method, endpoint, params)
-	if err != nil {
-		return nil, err
-	}
-	return chef.Do(req)
-}
-
-// Do submits an http request
-func (chef *Chef) Do(req *http.Request) (*http.Response, error) {
-
+// makeRequest
+// Take a request object, Setup Auth headers and Send it to the server
+func (chef *Chef) makeRequest(request *http.Request) (*http.Response, error) {
+	chef.apiRequestHeaders(request)
 	var client *http.Client
 	if chef.SSLNoVerify {
 		tr := &http.Transport{
@@ -310,7 +291,52 @@ func (chef *Chef) Do(req *http.Request) (*http.Response, error) {
 		client = &http.Client{}
 	}
 
-	return client.Do(req)
+	return client.Do(request)
+}
+
+// pulled from goiardi
+// encode a string suitable for auth header
+func hashStr(toHash string) string {
+	h := sha1.New()
+	io.WriteString(h, toHash)
+	hashed := base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return hashed
+}
+
+// also from goiardi calc and encodebody data
+func calcBodyHash(r *http.Request) (string, error) {
+	var bodyStr string
+	var err error
+	if r.Body == nil {
+		bodyStr = ""
+	} else {
+		save := r.Body
+		save, r.Body, err = drainBody(r.Body)
+		if err != nil {
+			return "", err
+		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(r.Body)
+		bodyStr = buf.String()
+		r.Body = save
+	}
+	chkHash := hashStr(bodyStr)
+	return chkHash, err
+}
+
+// liberated from net/http/httputil
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
+	var buf bytes.Buffer
+	if _, err = buf.ReadFrom(b); err != nil {
+		return nil, nil, err
+	}
+	if err = b.Close(); err != nil {
+		return nil, nil, err
+	}
+	return ioutil.NopCloser(&buf), ioutil.NopCloser(bytes.NewBuffer(buf.Bytes())), nil
 }
 
 // base64BlockEncode takes a byte slice and breaks it up into a slice of strings
@@ -320,7 +346,7 @@ func base64BlockEncode(content []byte) []string {
 	var resultSlice []string
 	index := 0
 
-	for i := 0; i < len(resultString)/60; i += 1 {
+	for i := 0; i < len(resultString)/60; i++ {
 		resultSlice = append(resultSlice, resultString[index:index+60])
 		index += 60
 	}
@@ -330,15 +356,6 @@ func base64BlockEncode(content []byte) []string {
 	}
 
 	return resultSlice
-}
-
-// hashAndBase64 takes a string a returns a base64 representation of the hash of
-// the string in \n seperated 60 character long blocks (don't ask, it's a Chef
-// thing apparently)
-func hashAndBase64(content string) string {
-	hashMan := sha1.New()
-	hashMan.Write([]byte(content))
-	return strings.Join(base64BlockEncode(hashMan.Sum(nil)), "\n")
 }
 
 // getTimestamp returns an ISO-8601 formatted timestamp of the current time in
@@ -408,15 +425,15 @@ func (chef *Chef) privateEncrypt(data []byte) (enc []byte, err error) {
 	return
 }
 
-// generateRequestAuthorization returns a string slice of the Chef server
-// authorization headers
-func (chef *Chef) generateRequestAuthorization(httpMethod, path, body, timestamp string) ([]string, error) {
+// generateRequestAuthorization returns a srting slice of the signed headers
+// It assumes you have calculated and put the required headers on the request
+func (chef *Chef) generateRequestAuthorization(request *http.Request) ([]string, error) {
 	var content string
-	content += fmt.Sprintf("Method:%s\n", httpMethod)
-	content += fmt.Sprintf("Hashed Path:%s\n", hashAndBase64(path))
-	content += fmt.Sprintf("X-Ops-Content-Hash:%s\n", hashAndBase64(body))
-	content += fmt.Sprintf("X-Ops-Timestamp:%s\n", timestamp)
-	content += fmt.Sprintf("X-Ops-UserId:%s", chef.UserId)
+	content += fmt.Sprintf("Method:%s\n", request.Header.Get("Method"))
+	content += fmt.Sprintf("Hashed Path:%s\n", request.Header.Get("Hashed Path"))
+	content += fmt.Sprintf("X-Ops-Content-Hash:%s\n", request.Header.Get("X-Ops-Content-Hash"))
+	content += fmt.Sprintf("X-Ops-Timestamp:%s\n", request.Header.Get("X-Ops-Timestamp"))
+	content += fmt.Sprintf("X-Ops-UserId:%s", request.Header.Get("X-Ops-UserId"))
 	signature, err := chef.privateEncrypt([]byte(content))
 	if err != nil {
 		return nil, err
@@ -424,40 +441,39 @@ func (chef *Chef) generateRequestAuthorization(httpMethod, path, body, timestamp
 	return base64BlockEncode([]byte(string(signature))), nil
 }
 
-// apiRequestHeaders generates a map of all of the request headers that a
-// request to the Chef API will need
-func (chef *Chef) apiRequestHeaders(httpMethod, path, body string) (map[string]string, error) {
-	timestamp := getTimestamp()
-	headers := map[string]string{
-		"accept":             "application/json",
-		"x-chef-version":     chef.Version,
-		"x-ops-timestamp":    timestamp,
-		"x-ops-userid":       chef.UserId,
-		"x-ops-sign":         "version=1.0",
-		"x-ops-content-hash": hashAndBase64(body),
-	}
-
-	auths, err := chef.generateRequestAuthorization(httpMethod, path, body, timestamp)
-	if err != nil {
-		return nil, err
-	}
-	for index, value := range auths {
-		headers[fmt.Sprintf("X-Ops-Authorization-%d", index+1)] = string(value)
-	}
-
-	return headers, nil
-}
-
-// chefApiRequest adds all of the necessary headers to an HTTP request to the
-// chef server
-func (chef *Chef) apiRequest(req *http.Request, httpMethod, path, body string) error {
-	headers, err := chef.apiRequestHeaders(httpMethod, path, body)
+// apiRequestHeaders attache chef-server headers to the request
+func (chef *Chef) apiRequestHeaders(request *http.Request) error {
+	body_hash, err := calcBodyHash(request)
 	if err != nil {
 		return err
 	}
-	for key, value := range headers {
-		req.Header.Add(key, value)
+
+	// sanitize the path for the chef-server
+	// chef-server doesn't support '//' in the Hash Path.
+	path := path.Clean(request.URL.Path)
+	request.URL.Path = path
+
+	timestamp := getTimestamp()
+	request.Header.Set("Method", request.Method)
+	request.Header.Set("Hashed Path", hashStr(path))
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("X-Chef-Version", chef.Version)
+	request.Header.Set("X-Ops-Timestamp", timestamp)
+	request.Header.Set("X-Ops-Userid", chef.UserId)
+	request.Header.Set("X-Ops-Sign", "version=1.0")
+	request.Header.Set("X-Ops-Content-Hash", body_hash)
+
+	// generate signed string of headers
+	auths, err := chef.generateRequestAuthorization(request)
+	if err != nil {
+		return err
 	}
+
+	// roll over the auth slice and add the apropriate header
+	for index, value := range auths {
+		request.Header.Set(fmt.Sprintf("X-Ops-Authorization-%d", index+1), string(value))
+	}
+
 	return nil
 }
 
@@ -474,5 +490,4 @@ func responseBody(resp *http.Response) ([]byte, error) {
 	resp.Body.Close()
 
 	return body, nil
-
 }

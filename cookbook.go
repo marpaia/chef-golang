@@ -30,10 +30,10 @@ type CookbookVersion struct {
 	} `json:"files"`
 	Definitions []struct {
 		CookbookItem
-	} `json: "definitions"`
+	} `json:"definitions"`
 	Libraries []struct {
 		CookbookItem
-	} `json: "libraries"`
+	} `json:"libraries"`
 	Attributes []struct {
 		CookbookItem
 	} `json:"attributes"`
@@ -42,13 +42,13 @@ type CookbookVersion struct {
 	} `json:"recipes"`
 	Providers []struct {
 		CookbookItem
-	} `json: "providers"`
+	} `json:"providers"`
 	Resources []struct {
 		CookbookItem
-	} `json: "resources"`
+	} `json:"resources"`
 	Templates []struct {
 		CookbookItem
-	} `json: "templates"`
+	} `json:"templates"`
 	RootFiles []struct {
 		CookbookItem
 	} `json:"root_file"`
@@ -60,7 +60,7 @@ type CookbookVersion struct {
 		MaintainerEmail string            `json:"maintainer_email"`
 		License         string            `json:"license"`
 		Providing       map[string]string `json:"providing"`
-		Dependencies    map[string]string `json:dependencies`
+		Dependencies    map[string]string `json:"dependencies"`
 	} `json:"metadata"`
 	Name      string `json:"cookbook_name"`
 	Version   string `json:"version"`

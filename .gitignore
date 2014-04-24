@@ -1,3 +1,5 @@
 *.test
 *.swp
 .DS_Store
+tags
+coverage.out
