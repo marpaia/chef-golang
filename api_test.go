@@ -149,6 +149,31 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetWithParams(t *testing.T) {
+	type searchResults struct {
+		Total int           `json:"total"`
+		Start int           `json:"start"`
+		Rows  []interface{} `json:"rows"`
+	}
+
+	c := testConnectionWrapper(t)
+	params := make(map[string]string)
+	params["q"] = "name:neo4j*"
+
+	resp, err := c.GetWithParams("/search/node", params)
+	if err != nil {
+		t.Error(err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	res := new(searchResults)
+	json.Unmarshal(body, &res)
+
+	if res.Total == 0 {
+		t.Fatal("query result is empty: ", res)
+	}
+}
+
 func TestPost(t *testing.T) {
 	c := testConnectionWrapper(t)
 	config := testConfig()

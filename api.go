@@ -213,19 +213,6 @@ func keyFromString(key []byte) (*rsa.PrivateKey, error) {
 	return rsaKey, nil
 }
 
-// This func will take a string map and return a url.Vlalues struct suitable
-// for using in a request
-func mapToForm(params map[string]string) url.Values {
-	values := make(url.Values)
-	if params == nil {
-		return values
-	}
-	for k, v := range params {
-		values.Set(k, v)
-	}
-	return values
-}
-
 // Get makes an authenticated HTTP request to the Chef server for the supplied
 // endpoint
 func (chef *Chef) Get(endpoint string) (*http.Response, error) {
@@ -236,8 +223,20 @@ func (chef *Chef) Get(endpoint string) (*http.Response, error) {
 // GetWithParams makes an authenticated HTTP request to the Chef server for the
 // supplied endpoint and also includes GET query string parameters
 func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*http.Response, error) {
-	request, _ := http.NewRequest("GET", chef.requestUrl(endpoint), nil)
-	request.Form = mapToForm(params)
+	u, err := url.Parse(chef.requestUrl(endpoint))
+	if err != nil {
+		return nil, err
+	}
+	query := u.Query()
+	for k, v := range params {
+		query.Set(k, v)
+	}
+	u.RawQuery = query.Encode()
+
+	request, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	return chef.makeRequest(request)
 }
 
@@ -245,15 +244,12 @@ func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*htt
 // endpoint
 func (chef *Chef) PostForm(endpoint string, params map[string]string) (*http.Response, error) {
 	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), nil)
-	request.Form = mapToForm(params)
 	return chef.makeRequest(request)
 }
 
-// Post  post an io object to the chef server this uses standard http.Post
-// params are optional.
+// Post post to the chef api
 func (chef *Chef) Post(endpoint string, params map[string]string, body io.Reader) (*http.Response, error) {
 	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), body)
-	request.Form = mapToForm(params)
 	return chef.makeRequest(request)
 }
 
@@ -273,7 +269,9 @@ func (chef *Chef) Delete(endpoint string, params map[string]string) (*http.Respo
 	return chef.makeRequest(request)
 }
 
-// requestUrl generate the requestUrl from supplied endpoint
+//
+// requestUrl generate the requestUrl from supplied endpoint and params
+//
 func (chef *Chef) requestUrl(endpoint string) string {
 	return fmt.Sprintf("%s/%s", chef.Url, endpoint)
 }
