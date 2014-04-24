@@ -11,10 +11,18 @@ go get github.com/marpaia/chef-golang
 ```
 
 ## Unit tests
+There is a helper script in `test/support/start_server.sh` that will setup a goiardi server primed
+with unit-testing data. there is also an example knife config and a script named `test/support/chef_config.sh`.
 
-Obviously many of the unit tests require a functioning Chef installation in
-order to verify the results of API requests. Edit the `TEST_CONFIG.json` file
-with the appropriate endpoints and information, and run `go test -v`.
+If you don't have a local `~/.chef/knife.rb` you can simply run these 3 commands:
+```
+./test/support/start_server.sh
+./test/support/chef_config.sh
+go test -v
+```
+to shutdown the server run `test/support/stop_server.sh`
+
+The [goiardi](https://github.com/ctdk/goiardi) Server is listening on port `8443` and the keys and config are copied to /tmp/goiardi. If you want to setup your own `knife.rb` and not use the provided one.
 
 ## External dependencies
 
@@ -26,7 +34,6 @@ Like most every other Golang project, this projects documentation can be found
 on godoc at [godoc.org/github.com/marpaia/chef-golang](http://godoc.org/github.com/marpaia/chef-golang).
 
 ## Examples
-
 ```go
 package main
 

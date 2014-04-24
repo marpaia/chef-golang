@@ -250,7 +250,7 @@ func (chef *Chef) GetEnvironmentRecipes(name string) ([]string, error) {
 //         fmt.Println(role)
 //     }
 func (chef *Chef) GetEnvironmentRole(env, rol string) (map[string][]string, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("environments/%s/roles/%s", env, "WebBase"))
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/roles/%s", env, rol))
 	if err != nil {
 		return nil, false, err
 	}

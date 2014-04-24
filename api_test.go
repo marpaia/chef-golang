@@ -12,7 +12,7 @@ import (
 
 var testRequiredHeaders []string
 
-var ConfigFilePath = "./TEST_CONFIG.json"
+var ConfigFilePath = "test/support/TEST_CONFIG.json"
 
 func init() {
 	testRequiredHeaders = []string{
@@ -31,7 +31,7 @@ func testConnectionWrapper(t *testing.T) *Chef {
 		t.Fatal(err)
 	}
 	chef.SSLNoVerify = true
-
+	chef.Version = "11.6.0"
 	return chef
 }
 
@@ -61,9 +61,6 @@ type testConfigFile struct {
 	RequiredData struct {
 		Name string `json:"name"`
 	} `json:"required_data"`
-	RequiredPrincipal struct {
-		Name string `json:"name"`
-	} `json:"required_principal"`
 	SearchData struct {
 		Index string `json:"index"`
 		Query string `json:"query"`
@@ -75,13 +72,16 @@ type testConfigFile struct {
 		UserId  string `json:"user_name"`
 		Key     string `json:"key"`
 	} `json:"test_credentials"`
+	RequiredPrincipal struct {
+		Name string `json:"name"`
+	} `json:"required_principal"`
 	KeyPath   string `json:"key_path"`
 	KeyString string `json:"key_string"`
 }
 
 func testConfig() *testConfigFile {
-	t := new(testing.T)
 	file, err := ioutil.ReadFile(ConfigFilePath)
+	t := new(testing.T)
 	if err != nil {
 		t.Error(err)
 	}
@@ -98,21 +98,9 @@ func TestReadConfig(t *testing.T) {
 	_ = testConfig()
 }
 
-func TestApiRequest(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	method := "GET"
-	endpoint := "cookbooks"
-	requestURL := fmt.Sprintf("%s/%s", chef.Url, endpoint)
-	req, err := http.NewRequest(method, requestURL, nil)
-	if err != nil {
-		t.Error(err)
-	}
-	chef.apiRequest(req, method, fmt.Sprintf("/%s", endpoint), "")
-
-	for _, value := range testRequiredHeaders {
-		if req.Header.Get(value) == "" {
-			t.Error("Couldn't find header:", value)
-		}
+func TestHashStr(t *testing.T) {
+	if len(hashStr("hash_this")) != 28 {
+		t.Error("Wrong length for hashAndBase64")
 	}
 }
 
@@ -135,7 +123,7 @@ func TestResponseBody(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	c := testConnectionWrapper(t)
-	resp, err := c.Get("cookbooks")
+	resp, err := c.Get("/cookbooks")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +154,7 @@ func TestPost(t *testing.T) {
 	config := testConfig()
 	cookbook := config.RequiredCookbook.Name
 	run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
-	resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", run_list)
+	resp, err := c.Post("/environments/_default/cookbook_versions", nil, run_list)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,15 +186,29 @@ func TestConnect(t *testing.T) {
 	}
 }
 
+func TestGenerateRequestAuthorization(t *testing.T) {
+	chef := testConnectionWrapper(t)
+	request, err := http.NewRequest("GET", chef.requestUrl("/cookbooks"), nil)
+	auth, err := chef.generateRequestAuthorization(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(auth[0]) != 60 {
+		t.Error("Incorrect request authorization string")
+	}
+}
+
 func TestApiRequestHeaders(t *testing.T) {
 	chef := testConnectionWrapper(t)
-	headers, err := chef.apiRequestHeaders("GET", "/cookbooks", "")
+	request, _ := http.NewRequest("GET", chef.requestUrl("/cookbooks"), nil)
+	err := chef.apiRequestHeaders(request)
 	if err != nil {
+		println("failed to generate RequestHeaders")
 		t.Fatal(err)
 	}
 	count := 0
 	for _, requiredHeader := range testRequiredHeaders {
-		for header := range headers {
+		for header := range request.Header {
 			if strings.ToLower(requiredHeader) == strings.ToLower(header) {
 				count += 1
 				break
@@ -215,17 +217,6 @@ func TestApiRequestHeaders(t *testing.T) {
 	}
 	if count != len(testRequiredHeaders) {
 		t.Error("apiRequestHeaders didn't return all of testRequiredHeaders")
-	}
-}
-
-func TestGenerateRequestAuthorization(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	auth, err := chef.generateRequestAuthorization("GET", "/cookbooks", "", "2013-10-27T20:45:25Z")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(auth[0]) != 60 {
-		t.Error("Incorrect request authorization string")
 	}
 }
 
@@ -246,33 +237,6 @@ func TestBase64BlockEncode(t *testing.T) {
 	expected := []string{"YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXphYmNkZWZnaGlqa2xtbm9wcXJz", "dHV2d3h5emFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6"}
 	if !reflect.DeepEqual(results, expected) {
 		t.Error("Results not matching")
-	}
-}
-
-func TestHashAndBase64(t *testing.T) {
-	if len(hashAndBase64("hash_this")) != 28 {
-		t.Error("Wrong length for hashAndBase64")
-	}
-}
-
-func TestDo(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	req, err := http.NewRequest("GET", "https://www.etsy.com/", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = chef.Do(req)
-	if err != nil {
-		t.Error(err)
-	}
-
-}
-
-func TestGenerateRequest(t *testing.T) {
-	chef := testConnectionWrapper(t)
-	_, err := chef.generateRequest("GET", "cookbooks", nil)
-	if err != nil {
-		t.Error(err)
 	}
 }
 
