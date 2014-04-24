@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -x
 test/support/chef_config.sh
 go get -v github.com/ctdk/goiardi
 test/support/start_server.sh
