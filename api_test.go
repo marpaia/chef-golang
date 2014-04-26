@@ -241,6 +241,20 @@ func TestPost(t *testing.T) {
 	if !found {
 		t.Error("Cookbook not solved")
 	}
+
+	// Test partial search via post. Should be in search probably, but function
+	// is in api raw post method.
+	partial_body := strings.NewReader(` { 'name' => [ 'name' ] } `)
+	params := make(map[string]string)
+	params["q"] = "name:neo4j*"
+
+	// For now this isn't supported in goiardi, but we can still submit it.
+	resp, err = c.Post("/search/node", params, partial_body)
+	if err != nil {
+		t.Error(err)
+	}
+	// TODO: make this work better
+
 }
 
 func TestConnect(t *testing.T) {
