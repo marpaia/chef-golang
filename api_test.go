@@ -159,6 +159,21 @@ func TestConnectUrl(t *testing.T) {
 
 }
 
+func TestBuildQueryString(t *testing.T) {
+	c := testConnectionWrapper(t)
+
+	params := make(map[string]string)
+	params["foo"] = "bar"
+	s, err := c.buildQueryString("cookbooks", params)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if s != "http://127.0.0.1:8443/cookbooks?foo=bar" {
+		t.Fatal("assembled uri doesn't match", s)
+	}
+}
+
 func TestGet(t *testing.T) {
 	c := testConnectionWrapper(t)
 	resp, err := c.Get("/cookbooks")
