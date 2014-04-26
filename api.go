@@ -168,7 +168,8 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	return chef, nil
 }
 
-// Connect to the Chefserver with auth credentials
+// Connect to the Chefserver with auth
+// Use this to connect to a server without having to parse a knife config
 func ConnectUrl(chefServerUrl, version, userid, key string) (*Chef, error) {
 	chef := new(Chef)
 	chef.Version = version
@@ -214,6 +215,25 @@ func keyFromString(key []byte) (*rsa.PrivateKey, error) {
 	return rsaKey, nil
 }
 
+// assemble query string from params
+func (chef *Chef) buildQueryString(endpoint string, params map[string]string) (string, error) {
+	u, err := url.Parse(chef.requestUrl(endpoint))
+	if err != nil {
+		return "", err
+	}
+
+	query := u.Query()
+	for k, v := range params {
+		query.Set(k, v)
+	}
+	u.RawQuery = query.Encode()
+	if err != nil {
+		return "", err
+	}
+
+	return u.String(), nil
+}
+
 // Get makes an authenticated HTTP request to the Chef server for the supplied
 // endpoint
 func (chef *Chef) Get(endpoint string) (*http.Response, error) {
@@ -224,33 +244,26 @@ func (chef *Chef) Get(endpoint string) (*http.Response, error) {
 // GetWithParams makes an authenticated HTTP request to the Chef server for the
 // supplied endpoint and also includes GET query string parameters
 func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*http.Response, error) {
-	u, err := url.Parse(chef.requestUrl(endpoint))
+	query, err := chef.buildQueryString(endpoint, params)
 	if err != nil {
 		return nil, err
 	}
-	query := u.Query()
-	for k, v := range params {
-		query.Set(k, v)
-	}
-	u.RawQuery = query.Encode()
 
-	request, err := http.NewRequest("GET", u.String(), nil)
+	request, err := http.NewRequest("GET", query, nil)
 	if err != nil {
 		return nil, err
 	}
-	return chef.makeRequest(request)
-}
-
-// PostForm makes an authenticated POST request to the Chef server With params for the supplied
-// endpoint
-func (chef *Chef) PostForm(endpoint string, params map[string]string) (*http.Response, error) {
-	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), nil)
 	return chef.makeRequest(request)
 }
 
 // Post post to the chef api
 func (chef *Chef) Post(endpoint string, params map[string]string, body io.Reader) (*http.Response, error) {
-	request, _ := http.NewRequest("POST", chef.requestUrl(endpoint), body)
+	query, err := chef.buildQueryString(endpoint, params)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest("POST", query, body)
 	return chef.makeRequest(request)
 }
 
