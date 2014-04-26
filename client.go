@@ -36,7 +36,7 @@ type Client struct {
 //         fmt.Println("Client:", client)
 //     }
 func (chef *Chef) GetClients() (map[string]string, error) {
-	resp, err := chef.Get("clients")
+	resp, err := chef.Get("clients", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (chef *Chef) GetClients() (map[string]string, error) {
 //         fmt.Printf("%#v\n", client)
 //     }
 func (chef *Chef) GetClient(name string) (*Client, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("clients/%s", name))
+	resp, err := chef.Get(fmt.Sprintf("clients/%s", name), nil)
 	if err != nil {
 		return nil, false, err
 	}

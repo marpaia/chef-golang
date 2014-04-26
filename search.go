@@ -39,7 +39,7 @@ type SearchResults struct {
 //         fmt.Println(index)
 //      }
 func (chef *Chef) GetSearchIndexes() (map[string]string, error) {
-	resp, err := chef.Get("search")
+	resp, err := chef.Get("search", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (search *SearchParams) Execute() (*SearchResults, error) {
 	if search.Sort != "" {
 		params["sort"] = search.Sort
 	}
-	resp, err := search.chef.GetWithParams(fmt.Sprintf("search/%s", search.Index), params)
+	resp, err := search.chef.Get(fmt.Sprintf("search/%s", search.Index), params)
 	if err != nil {
 		return nil, err
 	}
