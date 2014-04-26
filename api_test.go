@@ -32,6 +32,7 @@ func testConnectionWrapper(t *testing.T) *Chef {
 	}
 	chef.SSLNoVerify = true
 	chef.Version = "11.6.0"
+
 	return chef
 }
 
@@ -119,6 +120,43 @@ func TestResponseBody(t *testing.T) {
 	if !strings.Contains(string(bytes), etsyString) {
 		t.Error("Response body didn't return valid string")
 	}
+}
+
+func TestConnectCredentials(t *testing.T) {
+	config := testConfig()
+	host := config.TestCredentials.Host
+	port := config.TestCredentials.Port
+	version := config.TestCredentials.Version
+	userid := config.TestCredentials.UserId
+	key := config.TestCredentials.Key
+	_, err := ConnectCredentials(host, port, version, userid, key)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestConnectUrl(t *testing.T) {
+	config := testConfig()
+
+	var url string
+	switch config.TestCredentials.Port {
+	case "443":
+		url = fmt.Sprintf("https://%s", config.TestCredentials.Host)
+	case "80":
+		url = fmt.Sprintf("http://%s", config.TestCredentials.Host)
+	default:
+		url = fmt.Sprintf("%s:%s", config.TestCredentials.Host, config.TestCredentials.Port)
+	}
+
+	c, err := ConnectUrl(url, "0.0.1", config.TestCredentials.UserId, config.TestCredentials.Key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c.UserId != config.TestCredentials.UserId {
+		t.Fatal("credentials don't match")
+	}
+
 }
 
 func TestGet(t *testing.T) {
@@ -276,19 +314,6 @@ func TestKeyFromString(t *testing.T) {
 func TestKeyFromFile(t *testing.T) {
 	config := testConfig()
 	_, err := keyFromFile(config.KeyPath)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestConnectCredentials(t *testing.T) {
-	config := testConfig()
-	host := config.TestCredentials.Host
-	port := config.TestCredentials.Port
-	version := config.TestCredentials.Version
-	userid := config.TestCredentials.UserId
-	key := config.TestCredentials.Key
-	_, err := ConnectCredentials(host, port, version, userid, key)
 	if err != nil {
 		t.Error(err)
 	}

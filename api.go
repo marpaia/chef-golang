@@ -168,6 +168,7 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	return chef, nil
 }
 
+// Connect to the Chefserver with auth credentials
 func ConnectUrl(chefServerUrl, version, userid, key string) (*Chef, error) {
 	chef := new(Chef)
 	chef.Version = version
