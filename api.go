@@ -215,13 +215,6 @@ func keyFromString(key []byte) (*rsa.PrivateKey, error) {
 	return rsaKey, nil
 }
 
-// Get makes an authenticated HTTP request to the Chef server for the supplied
-// endpoint
-func (chef *Chef) Get(endpoint string) (*http.Response, error) {
-	request, _ := http.NewRequest("GET", chef.requestUrl(endpoint), nil)
-	return chef.makeRequest(request)
-}
-
 // assemble query string from params
 func (chef *Chef) buildQueryString(endpoint string, params map[string]string) (string, error) {
 	u, err := url.Parse(chef.requestUrl(endpoint))
@@ -239,6 +232,13 @@ func (chef *Chef) buildQueryString(endpoint string, params map[string]string) (s
 	}
 
 	return u.String(), nil
+}
+
+// Get makes an authenticated HTTP request to the Chef server for the supplied
+// endpoint
+func (chef *Chef) Get(endpoint string) (*http.Response, error) {
+	request, _ := http.NewRequest("GET", chef.requestUrl(endpoint), nil)
+	return chef.makeRequest(request)
 }
 
 // GetWithParams makes an authenticated HTTP request to the Chef server for the
