@@ -259,7 +259,7 @@ func TestPost(t *testing.T) {
 
 	// Test partial search via post. Should be in search probably, but function
 	// is in api raw post method.
-	partial_body := strings.NewReader(` { 'name' => [ 'name' ] } `)
+	partial_body := strings.NewReader(` { "name":  [ "name" ] } `)
 	params := make(map[string]string)
 	params["q"] = "name:neo4j*"
 
@@ -268,8 +268,18 @@ func TestPost(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	// TODO: make this work better
 
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Error(err)
+	}
+
+	search_result := map[string]interface{}{}
+	json.Unmarshal(body, &search_result)
+
+	if search_result["total"].(float64) != 1 {
+		t.Error("partial search didn't return expect result")
+	}
 }
 
 func TestConnect(t *testing.T) {
