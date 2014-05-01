@@ -1,14 +1,11 @@
 package chef
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -16,10 +13,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -38,94 +32,27 @@ type Chef struct {
 
 // Connect looks for knife/chef configuration files and gather connection info
 // automagically
-func Connect() (*Chef, error) {
-	knifeFiles := []string{}
-	homedir := os.Getenv("HOME")
-	if homedir != "" {
-		knifeFiles = append(knifeFiles, filepath.Join(homedir, ".chef/knife.rb"))
-	}
-	knifeFiles = append(knifeFiles, "/etc/chef/client.rb")
-	knifeFiles = append(knifeFiles, "test/support/knife.rb")
+func Connect(configfile ...string) (*Chef, error) {
 	var knifeFile string
-	for _, each := range knifeFiles {
-		if _, err := os.Stat(each); err == nil {
-			knifeFile = each
-			break
-		}
+
+	if len(configfile) == 1 {
+		knifeFile = configfile[0]
+	} else {
+		knifeFile = ""
 	}
 
-	if knifeFile == "" {
-		return nil, errors.New("Configuration file not found")
-	}
-
-	file, err := os.Open(knifeFile)
-	defer file.Close()
+	config, err := ParseConfig(knifeFile)
 	if err != nil {
 		return nil, err
 	}
-	scanner := bufio.NewScanner(file)
 	chef := new(Chef)
-	for scanner.Scan() {
-		split := splitWhitespace(scanner.Text())
-		if len(split) == 2 {
-			switch split[0] {
-			case "node_name":
-				chef.UserId = filterQuotes(split[1])
-			case "client_key":
-				key, err := keyFromFile(filterQuotes(split[1]))
-				if err != nil {
-					return nil, err
-				}
-				chef.Key = key
-			case "chef_server_url":
-				parsedUrl := filterQuotes(split[1])
-				chef.Url = parsedUrl
-				chefUrl, err := url.Parse(parsedUrl)
-				if err != nil {
-					return nil, err
-				}
-				hostPort := strings.Split(chefUrl.Host, ":")
-				if len(hostPort) == 2 {
-					chef.Host = hostPort[0]
-					chef.Port = hostPort[1]
-				} else if len(hostPort) == 1 {
-					chef.Host = hostPort[0]
-					switch chefUrl.Scheme {
-					case "http":
-						chef.Port = "80"
-					case "https":
-						chef.Port = "443"
-					default:
-						return nil, errors.New("Invalid http scheme")
-					}
-
-				} else {
-					return nil, errors.New("Invalid host format")
-				}
-			}
-		}
-	}
-
-	if chef.Key == nil {
-		return nil, errors.New("missing 'client_key' in knife.rb")
-	}
+	chef.Key = config.ClientKey
+	chef.UserId = config.NodeName
+	chef.Url = config.ChefServerUrl
+	chef.Host = config.Host
+	chef.Port = config.Port
 
 	return chef, nil
-}
-
-// filterQuotes returns a string with surrounding quotes filtered
-func filterQuotes(s string) string {
-	re1 := regexp.MustCompile(`^(\'|\")`)
-	re2 := regexp.MustCompile(`(\'|\")$`)
-	return re2.ReplaceAllString(re1.ReplaceAllString(s, ``), ``)
-}
-
-// Given a string with multiple consecutive spaces, splitWhitespace returns a
-// slice of strings which represent the given string split by \s characters with
-// all duplicates removed
-func splitWhitespace(s string) []string {
-	re := regexp.MustCompile(`\s+`)
-	return strings.Split(re.ReplaceAllString(s, `\s`), `\s`)
 }
 
 // Given the appropriate connection parameters, ConnectChef returns a pointer to
@@ -153,9 +80,9 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	var err error
 
 	if strings.Contains(key, "-----BEGIN RSA PRIVATE KEY-----") {
-		rsaKey, err = keyFromString([]byte(key))
+		rsaKey, err = KeyFromString([]byte(key))
 	} else {
-		rsaKey, err = keyFromFile(key)
+		rsaKey, err = KeyFromFile(key)
 	}
 	if err != nil {
 		return nil, err
@@ -180,9 +107,9 @@ func ConnectUrl(chefServerUrl, version, userid, key string) (*Chef, error) {
 	var err error
 
 	if strings.Contains(key, "-----BEGIN RSA PRIVATE KEY-----") {
-		rsaKey, err = keyFromString([]byte(key))
+		rsaKey, err = KeyFromString([]byte(key))
 	} else {
-		rsaKey, err = keyFromFile(key)
+		rsaKey, err = KeyFromFile(key)
 	}
 	if err != nil {
 		return nil, err
@@ -191,28 +118,6 @@ func ConnectUrl(chefServerUrl, version, userid, key string) (*Chef, error) {
 	chef.Key = rsaKey
 
 	return chef, nil
-}
-
-// keyFromFile reads an RSA private key given a filepath
-func keyFromFile(filename string) (*rsa.PrivateKey, error) {
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	return keyFromString(content)
-}
-
-// keyFromString parses an RSA private key from a string
-func keyFromString(key []byte) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode(key)
-	if block == nil {
-		return nil, fmt.Errorf("block size invalid for '%s'", string(key))
-	}
-	rsaKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-	return rsaKey, nil
 }
 
 // assemble query string from params
@@ -504,3 +409,4 @@ func responseBody(resp *http.Response) ([]byte, error) {
 
 	return body, nil
 }
+
