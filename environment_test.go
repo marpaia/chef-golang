@@ -78,7 +78,6 @@ func TestGetEnvironmentRecipes(t *testing.T) {
 
 // For now I am skiping this test because it is a webui only endpoint
 func TestGetEnvironmentRole(t *testing.T) {
-	t.Skip("this endpoint isn't implemented in goiardi yet, and is only used by webui")
 	chef := testConnectionWrapper(t)
 	config := testConfig()
 	println("Looking for role: ", config.RequiredRole.Name)
