@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# script to setup and pull goiardi into local system, create users, and run tests against.
+# script to setup and pull goiardi into local
+# system, create users, and run tests against.
 #
 #-------------------------------------------------------------------------------
 set -e

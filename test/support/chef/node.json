@@ -1,0 +1,17 @@
+{
+  "name": "neo4j.example.org",
+  "chef_environment": "production",
+  "json_class": "Chef::Node",
+  "automatic": {
+  },
+  "normal": {
+  },
+  "chef_type": "node",
+  "default": {
+  },
+  "override": {
+  },
+  "run_list": [
+
+  ]
+}
