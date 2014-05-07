@@ -277,8 +277,14 @@ func TestPost(t *testing.T) {
 	}
 }
 
-func TestConnect(t *testing.T) {
+func TestConnectNoFile(t *testing.T) {
 	if _, err := Connect(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestConnectFile(t *testing.T) {
+	if _, err := Connect("test/support/knife.rb"); err != nil {
 		t.Error(err)
 	}
 }
