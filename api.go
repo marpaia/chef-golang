@@ -38,13 +38,29 @@ type Chef struct {
 
 // Connect looks for knife/chef configuration files and gather connection info
 // automagically
-func Connect() (*Chef, error) {
+func Connect(filename ...string) (*Chef, error) {
 	knifeFiles := []string{}
+
+	if len(filename) > 0 {
+		for _, v := range filename {
+			knifeFiles = append(knifeFiles, v)
+		}
+	}
+
+	// Follow knife way of identifying knife.rb
+	// Check current directory for a .chef directory
+	knifeFiles = append(knifeFiles, ".chef/knife.rb")
+
+	// Check ~/.chef
 	homedir := os.Getenv("HOME")
 	if homedir != "" {
 		knifeFiles = append(knifeFiles, filepath.Join(homedir, ".chef/knife.rb"))
 	}
+
+	// Check client.rb
 	knifeFiles = append(knifeFiles, "/etc/chef/client.rb")
+
+	// Fall back on included test/support/knife.rb
 	knifeFiles = append(knifeFiles, "test/support/knife.rb")
 	var knifeFile string
 	for _, each := range knifeFiles {
