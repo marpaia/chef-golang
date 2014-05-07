@@ -122,37 +122,36 @@ func TestResponseBody(t *testing.T) {
 	}
 }
 
-func TestConnectCredentials(t *testing.T) {
+func TestConnectBuilderNoOrg(t *testing.T) {
 	config := testConfig()
 	host := config.TestCredentials.Host
 	port := config.TestCredentials.Port
 	version := config.TestCredentials.Version
 	userid := config.TestCredentials.UserId
 	key := config.TestCredentials.Key
-	_, err := ConnectCredentials(host, port, version, userid, key)
+	org := ""
+	c, err := ConnectBuilder(host, port, version, userid, key, org)
 	if err != nil {
 		t.Error(err)
 	}
+	if c.UserId != config.TestCredentials.UserId {
+		t.Fatal("credentials don't match")
+	}
+
 }
 
-func TestConnectUrl(t *testing.T) {
+func TestConnectBuilderOrg(t *testing.T) {
 	config := testConfig()
-
-	var url string
-	switch config.TestCredentials.Port {
-	case "443":
-		url = fmt.Sprintf("https://%s", config.TestCredentials.Host)
-	case "80":
-		url = fmt.Sprintf("http://%s", config.TestCredentials.Host)
-	default:
-		url = fmt.Sprintf("%s:%s", config.TestCredentials.Host, config.TestCredentials.Port)
-	}
-
-	c, err := ConnectUrl(url, "0.0.1", config.TestCredentials.UserId, config.TestCredentials.Key)
+	host := config.TestCredentials.Host
+	port := config.TestCredentials.Port
+	version := config.TestCredentials.Version
+	userid := config.TestCredentials.UserId
+	key := config.TestCredentials.Key
+	org := "myorg"
+	c, err := ConnectBuilder(host, port, version, userid, key, org)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
-
 	if c.UserId != config.TestCredentials.UserId {
 		t.Fatal("credentials don't match")
 	}
