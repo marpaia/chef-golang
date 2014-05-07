@@ -27,13 +27,14 @@ import (
 // Chef is the type that contains all of the relevant information about a Chef
 // server connection
 type Chef struct {
-	Host        string
-	Url         string
-	Port        string
-	Version     string
-	Key         *rsa.PrivateKey
-	UserId      string
-	SSLNoVerify bool
+	Host         string
+	Url          string
+	Port         string
+	Version      string
+	Key          *rsa.PrivateKey
+	UserId       string
+	SSLNoVerify  bool
+	Organization string
 }
 
 // Connect looks for knife/chef configuration files and gather connection info
@@ -84,6 +85,10 @@ func Connect() (*Chef, error) {
 				if err != nil {
 					return nil, err
 				}
+				hostPath := strings.Split(chefUrl.Path, "/")
+				if len(hostPath) == 3 && hostPath[1] == "organizations" {
+					chef.Organization = hostPath[2]
+				}
 				hostPort := strings.Split(chefUrl.Host, ":")
 				if len(hostPort) == 2 {
 					chef.Host = hostPort[0]
@@ -113,29 +118,15 @@ func Connect() (*Chef, error) {
 	return chef, nil
 }
 
-// filterQuotes returns a string with surrounding quotes filtered
-func filterQuotes(s string) string {
-	re1 := regexp.MustCompile(`^(\'|\")`)
-	re2 := regexp.MustCompile(`(\'|\")$`)
-	return re2.ReplaceAllString(re1.ReplaceAllString(s, ``), ``)
-}
-
-// Given a string with multiple consecutive spaces, splitWhitespace returns a
-// slice of strings which represent the given string split by \s characters with
-// all duplicates removed
-func splitWhitespace(s string) []string {
-	re := regexp.MustCompile(`\s+`)
-	return strings.Split(re.ReplaceAllString(s, `\s`), `\s`)
-}
-
 // Given the appropriate connection parameters, ConnectChef returns a pointer to
 // a Chef type so that you can call request methods on it
-func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) {
+func ConnectBuilder(host, port, version, userid, key string, organization string) (*Chef, error) {
 	chef := new(Chef)
 	chef.Host = host
 	chef.Port = port
 	chef.Version = version
 	chef.UserId = userid
+	chef.Organization = organization
 
 	var url string
 	switch chef.Port {
@@ -145,6 +136,10 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 		url = fmt.Sprintf("http://%s", chef.Host)
 	default:
 		url = fmt.Sprintf("%s:%s", chef.Host, chef.Port)
+	}
+
+	if chef.Organization != "" {
+		url += "/organizations/" + chef.Organization
 	}
 
 	chef.Url = url
@@ -168,29 +163,19 @@ func ConnectCredentials(host, port, version, userid, key string) (*Chef, error) 
 	return chef, nil
 }
 
-// Connect to the Chefserver with auth
-// Use this to connect to a server without having to parse a knife config
-func ConnectUrl(chefServerUrl, version, userid, key string) (*Chef, error) {
-	chef := new(Chef)
-	chef.Version = version
-	chef.UserId = userid
-	chef.Url = chefServerUrl
+// filterQuotes returns a string with surrounding quotes filtered
+func filterQuotes(s string) string {
+	re1 := regexp.MustCompile(`^(\'|\")`)
+	re2 := regexp.MustCompile(`(\'|\")$`)
+	return re2.ReplaceAllString(re1.ReplaceAllString(s, ``), ``)
+}
 
-	var rsaKey *rsa.PrivateKey
-	var err error
-
-	if strings.Contains(key, "-----BEGIN RSA PRIVATE KEY-----") {
-		rsaKey, err = keyFromString([]byte(key))
-	} else {
-		rsaKey, err = keyFromFile(key)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	chef.Key = rsaKey
-
-	return chef, nil
+// Given a string with multiple consecutive spaces, splitWhitespace returns a
+// slice of strings which represent the given string split by \s characters with
+// all duplicates removed
+func splitWhitespace(s string) []string {
+	re := regexp.MustCompile(`\s+`)
+	return strings.Split(re.ReplaceAllString(s, `\s`), `\s`)
 }
 
 // keyFromFile reads an RSA private key given a filepath
