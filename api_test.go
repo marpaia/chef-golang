@@ -181,13 +181,9 @@ func TestGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Error(err)
-	}
-
 	cookbooks := map[string]interface{}{}
-	json.Unmarshal(body, &cookbooks)
+	json.NewDecoder(resp.Body).Decode(&cookbooks)
+
 	found := false
 	config := testConfig()
 	cookbook := config.RequiredCookbook.Name
