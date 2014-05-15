@@ -1,6 +1,7 @@
 package chef
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -22,6 +23,34 @@ func TestGetClient(t *testing.T) {
 	_, ok, err := chef.GetClient(config.RequiredClient.Name)
 	if !ok {
 		t.Error("Couldn't find required client")
+	}
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestCreateClient(t *testing.T) {
+	chef := testConnectionWrapper(t)
+	client, ok, err := chef.CreateClient("test-client", true)
+	if !ok {
+		t.Error("Couldn't create required client")
+	}
+	if err != nil {
+		t.Error(err)
+	}
+	if client.URI != fmt.Sprintf("http://localhost:8443/clients/%s", "test-client") {
+		t.Error("Client URI doesn't match", client.URI)
+	}
+	if client.PrivateKey == "" {
+		t.Error("New client private key was empty")
+	}
+}
+
+func TestDeleteClient(t *testing.T) {
+	chef := testConnectionWrapper(t)
+	ok, err := chef.DeleteClient("test-client")
+	if !ok {
+		t.Error("Couldn't delete required client")
 	}
 	if err != nil {
 		t.Error(err)

@@ -3,6 +3,7 @@ package chef
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 )
 
@@ -18,6 +19,8 @@ type Client struct {
 	Validator   bool   `json:"validator"`
 	Certificate string `json:"certificate"`
 	PublicKey   string `json:"public_key"`
+	PrivateKey  string `json:"private_key"`
+	URI         string `json:"uri"`
 }
 
 // chef.GetClients returns a map of client name's to client REST urls as well as
@@ -90,4 +93,36 @@ func (chef *Chef) GetClient(name string) (*Client, bool, error) {
 	json.Unmarshal(body, client)
 
 	return client, true, nil
+}
+
+// CreateClient accepts a client name and admin bool to create a new client.
+// It returns a Client type that includes a PrivateKey, PublicKey, and URI as
+// described in http://docs.opscode.com/api_chef_server.html#post
+func (chef *Chef) CreateClient(name string, admin bool) (*Client, bool, error) {
+	client_data := strings.NewReader(fmt.Sprintf(`{ "name": "%s", "admin": %t }`, name, admin))
+	resp, err := chef.Post("clients", nil, client_data)
+	if err != nil {
+		return nil, false, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, false, err
+	}
+
+	client := new(Client)
+	json.Unmarshal(body, &client)
+
+	return client, true, nil
+}
+
+// DeleteClient accepts a client name string and returns a true bool when the delete is
+// successful and a false bool with error when its not
+func (chef *Chef) DeleteClient(name string) (bool, error) {
+	params := make(map[string]string)
+	_, err := chef.Delete(fmt.Sprintf("clients/%s", name), params)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

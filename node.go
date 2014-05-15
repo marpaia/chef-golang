@@ -1,8 +1,10 @@
 package chef
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 )
 
@@ -76,6 +78,18 @@ type Node struct {
 	Default map[string]interface{} `json:"default"`
 }
 
+// chef.PutNode represents the node structure for PUTs/POSTs
+type PutNode struct {
+	Name        string                 `json:"name"`
+	ChefType    string                 `json:"chef_type"`
+	JSONClass   string                 `json:"json_class"`
+	Attributes  map[string]interface{} `json:"normal"`
+	Overrides   map[string]interface{} `json:"override"`
+	Defaults    map[string]interface{} `json:"default"`
+	RunList     []string               `json:"run_list"`
+	Environment string                 `json:"chef_environment"`
+}
+
 // chef.GetNodes returns a map of nodes names to the nodes's RESTful URL as well
 // as an error indicating if the request was successful or not.
 //
@@ -108,7 +122,7 @@ func (chef *Chef) GetNodes() (map[string]string, error) {
 }
 
 // chef.GetNode accepts a string which represents the name of a Chef role and
-// returns a chef.Environment type representing that role as well as a bool
+// returns a chef.Node type representing that role as well as a bool
 // indicating whether or not the role was found and an error indicating if the
 // request failed or not.
 //
@@ -145,5 +159,60 @@ func (chef *Chef) GetNode(name string) (*Node, bool, error) {
 	node := new(Node)
 	json.Unmarshal(body, node)
 
+	return node, true, nil
+}
+
+// CreateNode accepts a node name string and normal/override/default maps for
+// attributes, and a []string run list. It will create a new node and error if a
+// node already exists. It returns the node name, a success bool, and a potential error.
+func (chef *Chef) CreateNode(name, environment string, normal, overrides, defaults map[string]interface{}, run_list []string) (string, bool, error) {
+	node := new(PutNode)
+	node.Name = name
+	node.ChefType = "node"
+	node.JSONClass = "Chef::Node"
+	node.Attributes = normal
+	node.Overrides = overrides
+	node.Defaults = defaults
+	node.RunList = run_list
+	node.Environment = environment
+
+	json_body, err := json.Marshal(node)
+	if err != nil {
+		return name, false, err
+	}
+
+	post_body := bytes.NewReader(json_body)
+
+	resp, err := chef.Post("nodes", nil, post_body)
+	if err != nil {
+		return name, false, err
+	}
+
+	// The body contains the URI to the node, not sure if anyone will care.
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return name, false, err
+	}
+
+	return name, true, nil
+}
+
+// DeleteNode accepts a node name string and returns the node before it was deleted,
+// a true bool when the delete is successful and a false bool with error when its not
+func (chef *Chef) DeleteNode(name string) (*Node, bool, error) {
+	params := make(map[string]string)
+
+	resp, err := chef.Delete(fmt.Sprintf("nodes/%s", name), params)
+	if err != nil {
+		return nil, false, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, false, err
+	}
+
+	node := new(Node)
+	json.Unmarshal(body, &node)
 	return node, true, nil
 }
