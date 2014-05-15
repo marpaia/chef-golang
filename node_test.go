@@ -30,18 +30,9 @@ func TestGetNode(t *testing.T) {
 
 func TestCreateNode(t *testing.T) {
 	chef := testConnectionWrapper(t)
-	name := "test-node"
-	environment := "_default"
-	normal := make(map[string]interface{})
-	overrides := make(map[string]interface{})
-	defaults := make(map[string]interface{})
-	run_list := make([]string, 0)
-
-	normal["hi"] = "hello"
-	overrides["hi"] = "hello"
-	defaults["hi"] = "hello"
-
-	_, ok, err := chef.CreateNode(name, environment, normal, overrides, defaults, run_list)
+	node := new(Node)
+	node.Name = "test-node"
+	_, ok, err := chef.CreateNode(node)
 	if !ok {
 		t.Error("Couldn't create required node")
 	}
@@ -52,7 +43,9 @@ func TestCreateNode(t *testing.T) {
 
 func TestDeleteNode(t *testing.T) {
 	chef := testConnectionWrapper(t)
-	_, ok, err := chef.DeleteNode("test-node")
+	node := new(Node)
+	node.Name = "test-node"
+	_, ok, err := chef.DeleteNode(node)
 	if !ok {
 		t.Error("Couldn't delete required client")
 	}

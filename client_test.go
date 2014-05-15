@@ -31,7 +31,10 @@ func TestGetClient(t *testing.T) {
 
 func TestCreateClient(t *testing.T) {
 	chef := testConnectionWrapper(t)
-	client, ok, err := chef.CreateClient("test-client", true)
+	client := new(Client)
+	client.Name = "test-client"
+	client.Admin = true
+	client, ok, err := chef.CreateClient(client)
 	if !ok {
 		t.Error("Couldn't create required client")
 	}
@@ -41,14 +44,16 @@ func TestCreateClient(t *testing.T) {
 	if client.URI != fmt.Sprintf("http://localhost:8443/clients/%s", "test-client") {
 		t.Error("Client URI doesn't match", client.URI)
 	}
-	if client.PrivateKey == "" {
+	if ok && client.PrivateKey == "" {
 		t.Error("New client private key was empty")
 	}
 }
 
 func TestDeleteClient(t *testing.T) {
 	chef := testConnectionWrapper(t)
-	ok, err := chef.DeleteClient("test-client")
+	client := new(Client)
+	client.Name = "test-client"
+	ok, err := chef.DeleteClient(client)
 	if !ok {
 		t.Error("Couldn't delete required client")
 	}

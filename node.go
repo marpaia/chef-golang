@@ -75,20 +75,11 @@ type Node struct {
 		Recipes []string `json:"recipes"`
 		Roles   []string `json:"roles"`
 	} `json:"automatic"`
-	Normal  map[string]interface{} `json:"normal"`
-	Default map[string]interface{} `json:"default"`
-}
-
-// chef.PutNode represents the node structure for PUTs/POSTs
-type PutNode struct {
-	Name        string                 `json:"name"`
-	ChefType    string                 `json:"chef_type"`
-	JSONClass   string                 `json:"json_class"`
-	Attributes  map[string]interface{} `json:"normal"`
-	Overrides   map[string]interface{} `json:"override"`
-	Defaults    map[string]interface{} `json:"default"`
-	RunList     []string               `json:"run_list"`
-	Environment string                 `json:"chef_environment"`
+	Normal     map[string]interface{} `json:"normal"`
+	Default    map[string]interface{} `json:"default"`
+	Attributes map[string]interface{} `json:"normal"`
+	Overrides  map[string]interface{} `json:"override"`
+	Defaults   map[string]interface{} `json:"default"`
 }
 
 // chef.GetNodes returns a map of nodes names to the nodes's RESTful URL as well
@@ -163,39 +154,42 @@ func (chef *Chef) GetNode(name string) (*Node, bool, error) {
 	return node, true, nil
 }
 
-// CreateNode accepts a node name string and normal/override/default maps for
-// attributes, and a []string run list. It will create a new node and error if a
-// node already exists. It returns the node name, a success bool, and a potential error.
-func (chef *Chef) CreateNode(name, environment string, normal, overrides, defaults map[string]interface{}, run_list []string) (string, bool, error) {
-	node := new(PutNode)
-	node.Name = name
+// CreateNode accepts a Node struct and it will create a new node and error if a
+// node already exists. It returns the Node struct, a success bool, and a potential error.
+func (chef *Chef) CreateNode(node *Node) (*Node, bool, error) {
 	node.ChefType = "node"
 	node.JSONClass = "Chef::Node"
-	node.Attributes = normal
-	node.Overrides = overrides
-	node.Defaults = defaults
-	node.RunList = run_list
-	node.Environment = environment
-
-	json_body, err := json.Marshal(node)
-	if err != nil {
-		return name, false, err
+	if node.RunList == nil {
+		node.RunList = make([]string, 0)
+	}
+	if node.Attributes == nil {
+		node.Attributes = make(map[string]interface{})
+	}
+	if node.Default == nil {
+		node.Default = make(map[string]interface{})
+	}
+	if node.Overrides == nil {
+		node.Overrides = make(map[string]interface{})
 	}
 
-	post_body := bytes.NewReader(json_body)
-	resp, err := chef.Post("nodes", nil, post_body)
+	jsonBody, err := json.Marshal(node)
 	if err != nil {
-		return name, false, err
+		return node, false, err
+	}
+
+	postBody := bytes.NewReader(jsonBody)
+	resp, err := chef.Post("nodes", nil, postBody)
+	if err != nil {
+		return node, false, err
 	}
 	if resp.StatusCode != 201 {
 		err = errors.New(fmt.Sprintf("Server returned %s", resp.Status))
-		return name, false, err
+		return node, false, err
 	}
 
-	// The body contains the URI to the node, not sure if anyone will care.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return name, false, err
+		return node, false, err
 	}
 
 	requestError := new(Error)
@@ -203,18 +197,18 @@ func (chef *Chef) CreateNode(name, environment string, normal, overrides, defaul
 
 	if len(requestError.Error) != 0 {
 		err = errors.New(requestError.Error[0])
-		return name, false, err
+		return node, false, err
 	}
 
-	return name, true, nil
+	return node, true, nil
 }
 
-// DeleteNode accepts a node name string and returns the node before it was deleted,
-// a true bool when the delete is successful and a false bool with error when its not
-func (chef *Chef) DeleteNode(name string) (*Node, bool, error) {
+// DeleteNode accepts a Node struct and returns a Node struct of the node config from chef,
+// a success bool, and an error
+func (chef *Chef) DeleteNode(node *Node) (*Node, bool, error) {
 	params := make(map[string]string)
 
-	resp, err := chef.Delete(fmt.Sprintf("nodes/%s", name), params)
+	resp, err := chef.Delete(fmt.Sprintf("nodes/%s", node.Name), params)
 	if err != nil {
 		return nil, false, err
 	}
@@ -232,7 +226,7 @@ func (chef *Chef) DeleteNode(name string) (*Node, bool, error) {
 		return nil, false, err
 	}
 
-	node := new(Node)
+	node = new(Node)
 	json.Unmarshal(body, &node)
 	return node, true, nil
 }
