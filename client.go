@@ -2,6 +2,7 @@ package chef
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -104,9 +105,21 @@ func (chef *Chef) CreateClient(name string, admin bool) (*Client, bool, error) {
 	if err != nil {
 		return nil, false, err
 	}
+	if resp.StatusCode != 201 {
+		err = errors.New(fmt.Sprintf("Server returned %s", resp.Status))
+		return nil, false, err
+	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		return nil, false, err
+	}
+
+	requestError := new(Error)
+	json.Unmarshal(body, requestError)
+
+	if len(requestError.Error) != 0 {
+		err = errors.New(requestError.Error[0])
 		return nil, false, err
 	}
 

@@ -30,7 +30,6 @@ func TestGetNode(t *testing.T) {
 
 func TestCreateNode(t *testing.T) {
 	chef := testConnectionWrapper(t)
-	// config := testConfig()
 	name := "test-node"
 	environment := "_default"
 	normal := make(map[string]interface{})

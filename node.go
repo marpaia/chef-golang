@@ -3,6 +3,7 @@ package chef
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -182,15 +183,26 @@ func (chef *Chef) CreateNode(name, environment string, normal, overrides, defaul
 	}
 
 	post_body := bytes.NewReader(json_body)
-
 	resp, err := chef.Post("nodes", nil, post_body)
 	if err != nil {
 		return name, false, err
 	}
+	if resp.StatusCode != 201 {
+		err = errors.New(fmt.Sprintf("Server returned %s", resp.Status))
+		return name, false, err
+	}
 
 	// The body contains the URI to the node, not sure if anyone will care.
-	_, err = ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		return name, false, err
+	}
+
+	requestError := new(Error)
+	json.Unmarshal(body, requestError)
+
+	if len(requestError.Error) != 0 {
+		err = errors.New(requestError.Error[0])
 		return name, false, err
 	}
 
@@ -209,6 +221,14 @@ func (chef *Chef) DeleteNode(name string) (*Node, bool, error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		return nil, false, err
+	}
+
+	requestError := new(Error)
+	json.Unmarshal(body, requestError)
+
+	if len(requestError.Error) != 0 {
+		err = errors.New(requestError.Error[0])
 		return nil, false, err
 	}
 
