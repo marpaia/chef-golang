@@ -15,4 +15,5 @@ Package: golang-chef-dev
 Architecture: any
 Section: libdevel
 Depends: ${misc:Depends}
-Description: Go library to interact with the Chef server API
+Description: Go library to access chef
+ chef-golang is a go library to interact with the Chef server API.
