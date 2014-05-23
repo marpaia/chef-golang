@@ -3,7 +3,7 @@ Maintainer: pkg-go <pkg-go-maintainers@lists.alioth.debian.org>
 Uploaders: Joseph Anthony Pasquale Holsten <joseph@josephholsten.com>
 Section: libs
 Priority: optional
-Build-Depends: debhelper (>= 8.0.0),
+Build-Depends: debhelper (>= 9.0.0),
                dh-golang,
                golang-go
 Standards-Version: 3.9.5
@@ -14,4 +14,5 @@ Vcs-Git: https://github.com/marpaia/chef-golang.git
 Package: golang-chef-dev
 Architecture: any
 Section: libdevel
+Depends: ${misc:Depends}
 Description: Go library to interact with the Chef server API
