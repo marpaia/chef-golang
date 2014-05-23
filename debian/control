@@ -6,7 +6,7 @@ Priority: optional
 Build-Depends: debhelper (>= 8.0.0),
                dh-golang,
                golang-go
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: https://github.com/marpaia/chef-golang
 Vcs-Browser: https://github.com/marpaia/chef-golang
 Vcs-Git: https://github.com/marpaia/chef-golang.git
