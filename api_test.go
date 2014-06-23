@@ -227,7 +227,7 @@ func TestPost(t *testing.T) {
 	config := testConfig()
 	cookbook := config.RequiredCookbook.Name
 	run_list := strings.NewReader(fmt.Sprintf(`{ "run_list": [ "%s" ] }`, cookbook))
-	resp, err := c.Post("/environments/_default/cookbook_versions", nil, run_list)
+	resp, err := c.Post("/environments/_default/cookbook_versions", "application/json", nil, run_list)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,7 +259,7 @@ func TestPost(t *testing.T) {
 	params["q"] = "name:neo4j*"
 
 	// For now this isn't supported in goiardi, but we can still submit it.
-	resp, err = c.Post("/search/node", params, partial_body)
+	resp, err = c.Post("/search/node", "application/json", params, partial_body)
 	if err != nil {
 		t.Error(err)
 	}
