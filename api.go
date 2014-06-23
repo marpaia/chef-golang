@@ -14,6 +14,8 @@ import (
 	"io"
 	"io/ioutil"
 	"math/big"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -258,13 +260,14 @@ func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*htt
 }
 
 // Post post to the chef api
-func (chef *Chef) Post(endpoint string, params map[string]string, body io.Reader) (*http.Response, error) {
+func (chef *Chef) Post(endpoint string, contentType string, params map[string]string, body io.Reader) (*http.Response, error) {
 	query, err := chef.buildQueryString(endpoint, params)
 	if err != nil {
 		return nil, err
 	}
 
 	request, err := http.NewRequest("POST", query, body)
+	request.Header.Set("Content-Type", contentType)
 	return chef.makeRequest(request)
 }
 
@@ -329,13 +332,46 @@ func calcBodyHash(r *http.Request) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(r.Body)
-		bodyStr = buf.String()
+		mediaType, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+		if err != nil {
+			return "", err
+		}
+		if strings.HasPrefix(mediaType, "multipart/form-data") {
+			bodyStr, err = readFileFromRequest(r, params["boundary"])
+			if err != nil {
+				return "", err
+			}
+		} else {
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(r.Body)
+			bodyStr = buf.String()
+		}
 		r.Body = save
 	}
 	chkHash := hashStr(bodyStr)
 	return chkHash, err
+}
+
+// read a file from a multipart/form-data request body
+// and return it as a string needed to caculate the body hash
+func readFileFromRequest(r *http.Request, boundary string) (string, error) {
+	mr := multipart.NewReader(r.Body, boundary)
+	form, err := mr.ReadForm(1048576)
+	if err != nil {
+		return "", err
+	}
+	// we can safely assume only one tarball is added to the
+	// multipart as this is how the Chef API is designed
+	fp := form.File["tarball"][0]
+	file, err := fp.Open()
+	if err != nil {
+		return "", err
+	}
+	buf, err := ioutil.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+	return string(buf), nil
 }
 
 // liberated from net/http/httputil
