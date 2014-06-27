@@ -59,8 +59,17 @@ type CookbookVersion struct {
 		Maintainer      string            `json:"maintainer"`
 		MaintainerEmail string            `json:"maintainer_email"`
 		License         string            `json:"license"`
-		Providing       map[string]string `json:"providing"`
+		Platforms       map[string]string `json:"platforms"`
 		Dependencies    map[string]string `json:"dependencies"`
+		Recommendations map[string]string `json:"recommendations"`
+		Suggestions     map[string]string `json:"suggestions"`
+		Conflicting     map[string]string `json:"conflicting"`
+		Providing       map[string]string `json:"providing"`
+		Replacing       map[string]string `json:"replacing"`
+		Attributes      map[string]string `json:"attributes"`
+		Groupings       map[string]string `json:"groupings"`
+		Recipes         map[string]string `json:"recipes"`
+		Version         string            `json:"version"`
 	} `json:"metadata"`
 	Name      string `json:"cookbook_name"`
 	Version   string `json:"version"`
