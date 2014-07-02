@@ -51,7 +51,7 @@ type CookbookVersion struct {
 	} `json:"templates"`
 	RootFiles []struct {
 		CookbookItem
-	} `json:"root_file"`
+	} `json:"root_files"`
 	Metadata struct {
 		Name            string            `json:"name"`
 		Description     string            `json:"description"`
