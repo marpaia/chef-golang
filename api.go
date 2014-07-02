@@ -37,6 +37,10 @@ type Chef struct {
 	Organization string
 }
 
+type Error struct {
+	Error []string `json:"error"`
+}
+
 // Connect looks for knife/chef configuration files and gather connection info
 // automagically
 func Connect(filename ...string) (*Chef, error) {
@@ -265,6 +269,7 @@ func (chef *Chef) Post(endpoint string, params map[string]string, body io.Reader
 	}
 
 	request, err := http.NewRequest("POST", query, body)
+	request.Header.Set("Content-Type", "application/json")
 	return chef.makeRequest(request)
 }
 
@@ -487,7 +492,6 @@ func (chef *Chef) apiRequestHeaders(request *http.Request) error {
 	for index, value := range auths {
 		request.Header.Set(fmt.Sprintf("X-Ops-Authorization-%d", index+1), string(value))
 	}
-
 	return nil
 }
 

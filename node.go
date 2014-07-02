@@ -1,8 +1,11 @@
 package chef
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 )
 
@@ -72,8 +75,11 @@ type Node struct {
 		Recipes []string `json:"recipes"`
 		Roles   []string `json:"roles"`
 	} `json:"automatic"`
-	Normal  map[string]interface{} `json:"normal"`
-	Default map[string]interface{} `json:"default"`
+	Normal     map[string]interface{} `json:"normal"`
+	Default    map[string]interface{} `json:"default"`
+	Attributes map[string]interface{} `json:"normal"`
+	Overrides  map[string]interface{} `json:"override"`
+	Defaults   map[string]interface{} `json:"default"`
 }
 
 // chef.GetNodes returns a map of nodes names to the nodes's RESTful URL as well
@@ -108,7 +114,7 @@ func (chef *Chef) GetNodes() (map[string]string, error) {
 }
 
 // chef.GetNode accepts a string which represents the name of a Chef role and
-// returns a chef.Environment type representing that role as well as a bool
+// returns a chef.Node type representing that role as well as a bool
 // indicating whether or not the role was found and an error indicating if the
 // request failed or not.
 //
@@ -145,5 +151,82 @@ func (chef *Chef) GetNode(name string) (*Node, bool, error) {
 	node := new(Node)
 	json.Unmarshal(body, node)
 
+	return node, true, nil
+}
+
+// CreateNode accepts a Node struct and it will create a new node and error if a
+// node already exists. It returns the Node struct, a success bool, and a potential error.
+func (chef *Chef) CreateNode(node *Node) (*Node, bool, error) {
+	node.ChefType = "node"
+	node.JSONClass = "Chef::Node"
+	if node.RunList == nil {
+		node.RunList = make([]string, 0)
+	}
+	if node.Attributes == nil {
+		node.Attributes = make(map[string]interface{})
+	}
+	if node.Default == nil {
+		node.Default = make(map[string]interface{})
+	}
+	if node.Overrides == nil {
+		node.Overrides = make(map[string]interface{})
+	}
+
+	jsonBody, err := json.Marshal(node)
+	if err != nil {
+		return node, false, err
+	}
+
+	postBody := bytes.NewReader(jsonBody)
+	resp, err := chef.Post("nodes", nil, postBody)
+	if err != nil {
+		return node, false, err
+	}
+	if resp.StatusCode != 201 {
+		err = errors.New(fmt.Sprintf("Server returned %s", resp.Status))
+		return node, false, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return node, false, err
+	}
+
+	requestError := new(Error)
+	json.Unmarshal(body, requestError)
+
+	if len(requestError.Error) != 0 {
+		err = errors.New(requestError.Error[0])
+		return node, false, err
+	}
+
+	return node, true, nil
+}
+
+// DeleteNode accepts a Node struct and returns a Node struct of the node config from chef,
+// a success bool, and an error
+func (chef *Chef) DeleteNode(node *Node) (*Node, bool, error) {
+	params := make(map[string]string)
+
+	resp, err := chef.Delete(fmt.Sprintf("nodes/%s", node.Name), params)
+	if err != nil {
+		return nil, false, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, false, err
+	}
+
+	requestError := new(Error)
+	json.Unmarshal(body, requestError)
+
+	if len(requestError.Error) != 0 {
+		err = errors.New(requestError.Error[0])
+		return nil, false, err
+	}
+
+	node = new(Node)
+	json.Unmarshal(body, &node)
 	return node, true, nil
 }

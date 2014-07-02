@@ -27,3 +27,29 @@ func TestGetNode(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestCreateNode(t *testing.T) {
+	chef := testConnectionWrapper(t)
+	node := new(Node)
+	node.Name = "test-node"
+	_, ok, err := chef.CreateNode(node)
+	if !ok {
+		t.Error("Couldn't create required node")
+	}
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDeleteNode(t *testing.T) {
+	chef := testConnectionWrapper(t)
+	node := new(Node)
+	node.Name = "test-node"
+	_, ok, err := chef.DeleteNode(node)
+	if !ok {
+		t.Error("Couldn't delete required client")
+	}
+	if err != nil {
+		t.Error(err)
+	}
+}
