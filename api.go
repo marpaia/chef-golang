@@ -265,6 +265,7 @@ func (chef *Chef) Post(endpoint string, params map[string]string, body io.Reader
 	}
 
 	request, err := http.NewRequest("POST", query, body)
+	request.Header.Add("Content-Type", "application/json")
 	return chef.makeRequest(request)
 }
 
