@@ -116,7 +116,7 @@ func TestResponseBody(t *testing.T) {
 		t.Error(err)
 	}
 
-	etsyString := "Is code your craft? http://www.etsy.com/careers"
+	etsyString := "Is code your craft? https://www.etsy.com/careers"
 	if !strings.Contains(string(bytes), etsyString) {
 		t.Error("Response body didn't return valid string")
 	}
