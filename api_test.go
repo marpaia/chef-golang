@@ -277,6 +277,22 @@ func TestPost(t *testing.T) {
 	}
 }
 
+func TestPut(t *testing.T) {
+	c := testConnectionWrapper(t)
+	name := "put_test"
+	env := strings.NewReader(
+		fmt.Sprintf(`{ "name": "%s", "full_name": "%s environment", }`, name, name))
+	resp, err := c.Put(fmt.Sprintf("/organizations/%s", name), nil, env)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestConnectNoFile(t *testing.T) {
 	if _, err := Connect(); err != nil {
 		t.Error(err)
