@@ -273,9 +273,10 @@ func (chef *Chef) Post(endpoint string, contentType string, params map[string]st
 
 // Put makes an authenticated PUT request to the Chef server for the supplied
 // endpoint
-func (chef *Chef) Put(endpoint string, params map[string]string) (*http.Response, error) {
+func (chef *Chef) Put(endpoint string, params map[string]string, body io.Reader) (*http.Response, error) {
 	//TODO: Finish this
-	request, _ := http.NewRequest("PUT", chef.requestUrl(endpoint), nil)
+	request, _ := http.NewRequest("PUT", chef.requestUrl(endpoint), body)
+	request.Header.Set("Content-Type", "application/json")
 	return chef.makeRequest(request)
 }
 
