@@ -132,6 +132,9 @@ func Connect(filename ...string) (*Chef, error) {
 	if chef.Key == nil {
 		return nil, errors.New("missing 'client_key' in knife.rb")
 	}
+	if chef.Version == "" {
+		chef.Version = "11.6.0"
+	}
 
 	return chef, nil
 }
