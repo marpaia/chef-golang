@@ -18,9 +18,9 @@ type SearchParams struct {
 
 // chef.SearchResults represents the results of a Chef search query
 type SearchResults struct {
-	Total int           `json:"total"`
-	Start int           `json:"start"`
-	Rows  []interface{} `json:"rows"`
+	Total int               `json:"total"`
+	Start int               `json:"start"`
+	Rows  []json.RawMessage `json:"rows"`
 }
 
 // chef.GetSearchIndexes returns a map of search indexes to the indexes RESTful
