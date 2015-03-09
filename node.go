@@ -14,13 +14,13 @@ type Node struct {
 	RunList     []string `json:"run_list"`
 	ChefType    string   `json:"chef_type"`
 	Info        struct {
-		Languages map[string]map[string]string `json:"languages"`
+		Languages map[string]interface{} `json:"languages"`
 		Kernel    struct {
-			Name    string                       `json:"name"`
-			Release string                       `json:"release"`
-			Version string                       `json:"version"`
-			Machine string                       `json:"machine"`
-			Modules map[string]map[string]string `json:"modules"`
+			Name    string                            `json:"name"`
+			Release string                            `json:"release"`
+			Version string                            `json:"version"`
+			Machine string                            `json:"machine"`
+			Modules map[string]map[string]interface{} `json:"modules"`
 		} `json:"kernel"`
 		OS        string `json:"os"`
 		OSVersion string `json:"os_version"`
@@ -30,17 +30,24 @@ type Node struct {
 		Network   struct {
 			Interfaces map[string]struct {
 				Type          string `json:"type"`
-				Number        string `json:"number"`
 				Encapsulation string `json:"encapsulation"`
 				Addresses     map[string]struct {
 					Family    string `json:"family"`
 					Broadcast string `json:"broadcast"`
 					Netmast   string `json:"netmast"`
 				} `json:"addresses"`
+				Routes []struct {
+					Destination string `json:"destination"`
+					Family      string `json:"family"`
+					Metric      string `json:"metric"`
+				} `json:"routes"`
+				State string            `json:"state"`
 				Flags []string          `json:"flags"`
 				MTU   string            `json:"mtu"`
 				Arp   map[string]string `json:"arp"`
 			} `json:"interfaces"`
+			DefaultInterface string `json:"default_interface"`
+			DefaultGateway   string `json:"default_gateway"`
 		} `json:"network"`
 		IPAddress       string                       `json:"ipaddress"`
 		MACAddress      string                       `json:"macaddress"`
@@ -48,15 +55,16 @@ type Node struct {
 		Keys            map[string]map[string]string `json:"keys"`
 		Platform        string                       `json:"platform"`
 		PlatformVersion string                       `json:"platform_version"`
+		PlatformFamily  string                       `json:"platform_family"`
 		CPU             map[string]interface{}       `json:"cpu"`
 		Filesystem      map[string]struct {
-			KBSize       string   `json:"ks_size"`
-			KBUsed       string   `json:"ks_used"`
-			KBavailable  string   `json:"ks_available"`
-			PercentUsed  string   `json:"percent_used"`
-			Mount        string   `json:"mount"`
-			FSType       string   `json:"fs_type"`
-			MountOptions []string `json:"mount_options"`
+			KBSize       interface{} `json:"ks_size"`
+			KBUsed       interface{} `json:"ks_used"`
+			KBavailable  interface{} `json:"ks_available"`
+			PercentUsed  interface{} `json:"percent_used"`
+			Mount        string      `json:"mount"`
+			FSType       string      `json:"fs_type"`
+			MountOptions []string    `json:"mount_options"`
 		} `json:"filesystem"`
 		Memory          map[string]interface{} `json:"memory"`
 		UptimeSeconds   int                    `json:"uptime_seconds"`
@@ -64,13 +72,8 @@ type Node struct {
 		IdletimeSeconds int                    `json:"idletime_seconds"`
 		Idletime        string                 `json:"idletime"`
 		BlockDevice     map[string]interface{} `json:"block_device"`
-		Datacenter      map[string]interface{} `json:"datacenter"`
-		Ipmi            struct {
-			Address    string `json:"address"`
-			MacAddress string `json:"mac_address"`
-		} `json:"ipmi"`
-		Recipes []string `json:"recipes"`
-		Roles   []string `json:"roles"`
+		Recipes         []string               `json:"recipes"`
+		Roles           []string               `json:"roles"`
 	} `json:"automatic"`
 	Normal  map[string]interface{} `json:"normal"`
 	Default map[string]interface{} `json:"default"`
