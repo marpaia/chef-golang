@@ -305,7 +305,7 @@ func (chef *Chef) makeRequest(request *http.Request) (*http.Response, error) {
 	var client *http.Client
 	if chef.SSLNoVerify {
 		tr := &http.Transport{
-                        Proxy: http.ProxyFromEnvironment,
+			Proxy:           http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		client = &http.Client{Transport: tr}
