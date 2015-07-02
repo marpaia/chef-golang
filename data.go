@@ -75,3 +75,43 @@ func (chef *Chef) GetDataByName(name string) (map[string]string, bool, error) {
 
 	return data, true, nil
 }
+
+// chef.GetTypedDataByName accepts a reference to a type to Unmarshal the data bag
+// JSON in to, and a string which represents the name of a specific databag.
+//
+// Returns a bool indicating whether or not the databag was found and an error indicating
+// if the request failed or not.
+//
+// Note that if the request is successful but no such data item existed, the
+// error return value will be nil but the bool will be false
+//
+// Usage:
+//
+//		var cfg MyAppConfig
+//    ok, err := chef.GetTypedDataByName(&cfg, "apache")
+//    if err != nil {
+//        fmt.Println(err)
+//        os.Exit(1)
+//    }
+//    if !ok {
+//        fmt.Println("Couldn't find that databag!")
+//    } else {
+//        fmt.Printf("%#v", cfg)
+//    }
+func (chef *Chef) GetTypedDataByName(data interface{}, name string) (bool, error) {
+	resp, err := chef.Get(fmt.Sprintf("data/%s", name))
+	if err != nil {
+		return false, err
+	}
+	body, err := responseBody(resp)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return false, nil
+		}
+		return false, err
+	}
+
+	json.Unmarshal(body, &data)
+
+	return true, nil
+}
