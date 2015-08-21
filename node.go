@@ -75,8 +75,9 @@ type Node struct {
 		Recipes         []string               `json:"recipes"`
 		Roles           []string               `json:"roles"`
 	} `json:"automatic"`
-	Normal  map[string]interface{} `json:"normal"`
-	Default map[string]interface{} `json:"default"`
+	Default  map[string]interface{} `json:"default"`
+	Normal   map[string]interface{} `json:"normal"`
+	Override map[string]interface{} `json:"override"`
 }
 
 // chef.GetNodes returns a map of nodes names to the nodes's RESTful URL as well
