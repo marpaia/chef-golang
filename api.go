@@ -485,7 +485,7 @@ func (chef *Chef) privateEncrypt(data []byte) (enc []byte, err error) {
 func (chef *Chef) generateRequestAuthorization(request *http.Request) ([]string, error) {
 	var content string
 	content += fmt.Sprintf("Method:%s\n", request.Header.Get("Method"))
-	content += fmt.Sprintf("Hashed Path:%s\n", request.Header.Get("Hashed Path"))
+	content += fmt.Sprintf("Hashed Path:%s\n", request.Header.Get("Hashed-Path"))
 	content += fmt.Sprintf("X-Ops-Content-Hash:%s\n", request.Header.Get("X-Ops-Content-Hash"))
 	content += fmt.Sprintf("X-Ops-Timestamp:%s\n", request.Header.Get("X-Ops-Timestamp"))
 	content += fmt.Sprintf("X-Ops-UserId:%s", request.Header.Get("X-Ops-UserId"))
@@ -510,7 +510,7 @@ func (chef *Chef) apiRequestHeaders(request *http.Request) error {
 
 	timestamp := getTimestamp()
 	request.Header.Set("Method", request.Method)
-	request.Header.Set("Hashed Path", hashStr(path))
+	request.Header.Set("Hashed-Path", hashStr(path))
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("X-Chef-Version", chef.Version)
 	request.Header.Set("X-Ops-Timestamp", timestamp)
