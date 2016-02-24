@@ -74,6 +74,7 @@ type Node struct {
 		BlockDevice     map[string]interface{} `json:"block_device"`
 		Recipes         []string               `json:"recipes"`
 		Roles           []string               `json:"roles"`
+		EC2             map[string]interface{} `json:"ec2"`
 	} `json:"automatic"`
 	Default  map[string]interface{} `json:"default"`
 	Normal   map[string]interface{} `json:"normal"`
