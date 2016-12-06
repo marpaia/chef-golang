@@ -97,7 +97,7 @@ type Node struct {
 //         fmt.Println(node)
 //      }
 func (chef *Chef) GetNodes() (map[string]string, error) {
-	resp, err := chef.Get("nodes")
+	resp, err := chef.Get("nodes", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (chef *Chef) GetNodes() (map[string]string, error) {
 //         fmt.Printf("%#v\n", node)
 //     }
 func (chef *Chef) GetNode(name string) (*Node, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("nodes/%s", name))
+	resp, err := chef.Get(fmt.Sprintf("nodes/%s", name), nil)
 	if err != nil {
 		return nil, false, err
 	}

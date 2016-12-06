@@ -33,7 +33,7 @@ type Role struct {
 //         fmt.Println(role)
 //      }
 func (chef *Chef) GetRoles() (map[string]string, error) {
-	resp, err := chef.Get("roles")
+	resp, err := chef.Get("roles", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (chef *Chef) GetRoles() (map[string]string, error) {
 //         fmt.Printf("%#v\n", role)
 //     }
 func (chef *Chef) GetRole(name string) (*Role, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("roles/%s", name))
+	resp, err := chef.Get(fmt.Sprintf("roles/%s", name), nil)
 	if err != nil {
 		return nil, false, err
 	}

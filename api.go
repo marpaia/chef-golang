@@ -242,14 +242,7 @@ func (chef *Chef) buildQueryString(endpoint string, params map[string]string) (s
 
 // Get makes an authenticated HTTP request to the Chef server for the supplied
 // endpoint
-func (chef *Chef) Get(endpoint string) (*http.Response, error) {
-	request, _ := http.NewRequest("GET", chef.requestUrl(endpoint), nil)
-	return chef.makeRequest(request)
-}
-
-// GetWithParams makes an authenticated HTTP request to the Chef server for the
-// supplied endpoint and also includes GET query string parameters
-func (chef *Chef) GetWithParams(endpoint string, params map[string]string) (*http.Response, error) {
+func (chef *Chef) Get(endpoint string, params map[string]string) (*http.Response, error) {
 	query, err := chef.buildQueryString(endpoint, params)
 	if err != nil {
 		return nil, err

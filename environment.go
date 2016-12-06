@@ -35,7 +35,7 @@ type Environment struct {
 //         fmt.Println(environment)
 //      }
 func (chef *Chef) GetEnvironments() (map[string]string, error) {
-	resp, err := chef.Get("environments")
+	resp, err := chef.Get("environments", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (chef *Chef) GetEnvironments() (map[string]string, error) {
 //         fmt.Printf("%#v\n", environment)
 //     }
 func (chef *Chef) GetEnvironment(name string) (*Environment, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("environments/%s", name))
+	resp, err := chef.Get(fmt.Sprintf("environments/%s", name), nil)
 	if err != nil {
 		return nil, false, err
 	}
@@ -108,7 +108,7 @@ func (chef *Chef) GetEnvironment(name string) (*Environment, bool, error) {
 //         fmt.Println(name, cookbook.Version[0])
 //      }
 func (chef *Chef) GetEnvironmentCookbooks(name string) (map[string]*Cookbook, error) {
-	resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks", name))
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks", name), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (chef *Chef) GetEnvironmentCookbooks(name string) (map[string]*Cookbook, er
 //         fmt.Printf("%#v\n", cookbook)
 //     }
 func (chef *Chef) GetEnvironmentCookbook(env, cb string) (*Cookbook, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks/%s", env, cb))
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/cookbooks/%s", env, cb), nil)
 	if err != nil {
 		return nil, false, err
 	}
@@ -181,7 +181,7 @@ func (chef *Chef) GetEnvironmentCookbook(env, cb string) (*Cookbook, bool, error
 //         fmt.Println(node)
 //      }
 func (chef *Chef) GetEnvironmentNodes(name string) (map[string]string, error) {
-	resp, err := chef.Get(fmt.Sprintf("environments/%s/nodes", name))
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/nodes", name), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (chef *Chef) GetEnvironmentNodes(name string) (map[string]string, error) {
 //         fmt.Println(recipe)
 //      }
 func (chef *Chef) GetEnvironmentRecipes(name string) ([]string, error) {
-	resp, err := chef.Get(fmt.Sprintf("environments/%s/recipes", name))
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/recipes", name), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func (chef *Chef) GetEnvironmentRecipes(name string) ([]string, error) {
 //         fmt.Println(role)
 //     }
 func (chef *Chef) GetEnvironmentRole(env, rol string) (map[string][]string, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("environments/%s/roles/%s", env, rol))
+	resp, err := chef.Get(fmt.Sprintf("environments/%s/roles/%s", env, rol), nil)
 	if err != nil {
 		return nil, false, err
 	}

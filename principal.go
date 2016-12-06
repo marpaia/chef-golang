@@ -28,7 +28,7 @@ import (
 //         fmt.Println(principal)
 //     }
 func (chef *Chef) GetPrincipal(name string) (map[string]string, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("principals/%s", name))
+	resp, err := chef.Get(fmt.Sprintf("principals/%s", name), nil)
 	if err != nil {
 		return nil, false, err
 	}

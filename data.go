@@ -20,7 +20,7 @@ import (
 //         fmt.Println(d)
 //     }
 func (chef *Chef) GetData() (map[string]string, error) {
-	resp, err := chef.Get("data")
+	resp, err := chef.Get("data", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (chef *Chef) GetData() (map[string]string, error) {
 //         fmt.Println(data)
 //     }
 func (chef *Chef) GetDataByName(name string) (map[string]string, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("data/%s", name))
+	resp, err := chef.Get(fmt.Sprintf("data/%s", name), nil)
 	if err != nil {
 		return nil, false, err
 	}

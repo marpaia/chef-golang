@@ -107,7 +107,7 @@ type CookbookItem struct {
 //         fmt.Println(name, cookbook.Version[0])
 //      }
 func (chef *Chef) GetCookbooks() (map[string]*Cookbook, error) {
-	resp, err := chef.Get("cookbooks")
+	resp, err := chef.Get("cookbooks", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (chef *Chef) GetCookbooks() (map[string]*Cookbook, error) {
 //         fmt.Printf("%#v\n", cookbook)
 //     }
 func (chef *Chef) GetCookbook(name string) (*Cookbook, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("cookbooks/%s", name))
+	resp, err := chef.Get(fmt.Sprintf("cookbooks/%s", name), nil)
 	if err != nil {
 		return nil, false, err
 	}
@@ -186,7 +186,7 @@ func (chef *Chef) GetCookbook(name string) (*Cookbook, bool, error) {
 //         fmt.Printf("%#v\n", cookbook)
 //     }
 func (chef *Chef) GetCookbookVersion(name, version string) (*CookbookVersion, bool, error) {
-	resp, err := chef.Get(fmt.Sprintf("cookbooks/%s/%s", name, version))
+	resp, err := chef.Get(fmt.Sprintf("cookbooks/%s/%s", name, version), nil)
 	if err != nil {
 		return nil, false, err
 	}

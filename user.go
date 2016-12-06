@@ -20,7 +20,7 @@ import (
 //         fmt.Println(user)
 //      }
 func (chef *Chef) GetUsers() (map[string]string, error) {
-	resp, err := chef.Get("users")
+	resp, err := chef.Get("users", nil)
 	if err != nil {
 		return nil, err
 	}
