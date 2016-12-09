@@ -534,6 +534,8 @@ func (chef *Chef) apiRequestHeaders(request *http.Request) error {
 
 // Given an http response object, responseBody returns the response body
 func responseBody(resp *http.Response) ([]byte, error) {
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(resp.Status)
 	}
@@ -542,7 +544,6 @@ func responseBody(resp *http.Response) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp.Body.Close()
 
 	return body, nil
 }
