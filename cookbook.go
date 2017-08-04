@@ -61,13 +61,8 @@ type CookbookVersion struct {
 		License         string                 `json:"license"`
 		Platforms       map[string]string      `json:"platforms"`
 		Dependencies    map[string]string      `json:"dependencies"`
-		Recommendations map[string]string      `json:"recommendations"`
-		Suggestions     map[string]string      `json:"suggestions"`
-		Conflicting     map[string]string      `json:"conflicting"`
 		Providing       map[string]string      `json:"providing"`
-		Replacing       map[string]string      `json:"replacing"`
 		Attributes      map[string]interface{} `json:"attributes"`
-		Groupings       map[string]interface{} `json:"groupings"`
 		Recipes         map[string]string      `json:"recipes"`
 		Version         string                 `json:"version"`
 	} `json:"metadata"`
